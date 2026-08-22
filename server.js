@@ -23,7 +23,7 @@ app.get('/api/tools', async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Hiba történt az eszközlista lekérésekor.' });
+    res.status(500).json({ error: 'Hiba történt az eszközlista lekérésekor.', debug_code: err.code, debug_message: err.message });
   }
 });
 
