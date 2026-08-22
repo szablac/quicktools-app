@@ -6,8 +6,9 @@
 
 | Módszer | Útvonal | Cél | Jogosultság | Fájl:sor |
 |---|---|---|---|---|
-| [KITÖLTENDŐ] | | | | |
+| GET | `/api/tools` | Aktív toolok listája (slug, név HU/EN, kategória) | nyilvános | `server.js` (tervezett) |
 
 ## Konvenciók
 
-- [KITÖLTENDŐ – pl. hibaválasz-formátum, verziózás, autentikáció módja]
+- Autentikáció: nincs (lásd `docs/04_DOMAIN_RULES.md` DR-001).
+- Hibaválasz: `{ "error": "üzenet" }` JSON, megfelelő HTTP státuszkóddal. Nyers SQL-/stack-hiba a kliensnek soha nem küldhető (`CLAUDE.md` 4. szakasz).

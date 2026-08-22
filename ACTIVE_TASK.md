@@ -6,32 +6,37 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 0 – Infrastruktúra-alap (KÉSZ), induló Fázis 1 – Platform-váz |
-| Aktív feladat | PROD-001 – monetizációs modell pontosítása (BLOCKED, felhasználói döntésre vár) |
-| Állapot | Fázis 0 lezárva és ellenőrizve; Fázis 1 még nem indult |
-| Kiemelt következő feladat | PROD-001 lezárása, utána PLAT-001 (platform-váz tervezése) |
-| Aktuális kódmódosítás | – (INFRA-001 lezárva, nincs nyitott kódváltoztatás) |
-| Blokkoló | Monetizáció-részletek a felhasználótól |
-| Utolsó tartós döntés | ADR-006 – Git deploy publikus repóval, SSH helyett HTTPS (`docs/09_DECISIONS.md`) |
+| Fázis | 1 – Platform-váz folyamatban |
+| Aktív feladat | PLAT-001 – tool-regisztrációs keret (kód kész, deploy hátravan) |
+| Állapot | `tools` tábla létrehozva éles DB-n; `server.js` mysql2 + `GET /api/tools`-szal bővítve, helyileg tesztelve; még nincs pusholva/deployolva |
+| Kiemelt következő feladat | Push + cPanel Git pull + npm install + restart, majd élő ellenőrzés |
+| Aktuális kódmódosítás | `server.js`, `package.json`, `package-lock.json` (mysql2 hozzáadva), `db/migrations/001_create_tools_table.sql` |
+| Blokkoló | – (Google AdSense felülvizsgálat még fut a háttérben, MON-001, nem blokkol) |
+| Utolsó tartós döntés | DR-001/DR-002 (`docs/04_DOMAIN_RULES.md`) – fiók/session elhalasztva, nyilvános hozzáférés; mysql2 nyers SQL Prisma helyett (deploy-kockázat miatt) |
 
 ## Következő pontos lépések
 
-1. Felhasználó pontosítja, mit módosítana a monetizációs modellen a `micro app ötletek.docx`-ban javasolthoz képest.
-2. PLAT-001 tervezése: fiók-keret, tool-regisztrációs keret, DB-séma első migrációja (`docs/04_DOMAIN_RULES.md`, `docs/12_DATABASE_AND_MIGRATIONS.md`).
-3. `server.js` bővítése: tényleges DB-kapcsolat (env változókból: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`), Express bevezetése.
+1. Commit + push a `server.js`/`package.json`/`db/migrations/` változásokra.
+2. cPanel: Git Version Control Pull → Setup Node.js App „Run NPM Install" (mysql2 miatt) → Restart.
+3. Élő ellenőrzés: `https://quicktools.qwer.hu/api/tools` üres tömböt (`[]`) adjon vissza hiba nélkül.
+4. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001), utána MON-002 (quicktools.qwer.hu külön webhelyként).
+
+> Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
 ## Legutóbbi interakciók
 
-- **QuickTools.hu projekt indítása**: új, önálló mappa (`D:\quicktools-app`) létrehozva, majd felfedezve, hogy már létezett benne egy előkészített „project-skeleton" sablon. A felhasználó elolvastatta a `micro app ötletek.docx`-ot (AI-konzultáció a koncepcióról), ez alapján tisztázódtak a founding kérdések (cél, célközönség, MVP-sorrend: platform-váz előbb, első tool a Favicon Generator, HU+EN UI, nincs határidő/budget). Módosított fájlok: `docs/01_PROJECT_FOUNDATIONS.md`, `docs/03_ARCHITECTURE.md`, `docs/09_DECISIONS.md` (ADR-001–005), `docs/roadmap/00_MASTER_PLAN.md`, `docs/10_BACKLOG.md`.
-- **Aldomain + adatbázis + Node.js App + git deploy (INFRA-001)**: `quicktools.qwer.hu` aldomain létrehozva cPanel alatt, SSL kiadva; `szablac_quicktools` MariaDB adatbázis + DB-user létrehozva; GitHub repó (`szablac/quicktools-app`) létrehozva és pusholva; cPanel Git Version Control beállítva (SSH-kulcsos klónozás nem működött shell-hozzáférés hiánya miatt → repó ideiglenesen publikussá téve, ADR-006); Node.js App (Passenger, Node 22) beállítva és elindítva egy minimális smoke-teszt `server.js`-sel. Több köztes hiba is felmerült és javításra került (elgépelt Application Root mappanév, hiányzó `.htaccess` a Node Selector számára, stale File Manager nézet) — a folyamat végén `https://quicktools.qwer.hu` böngészőből ellenőrizve, helyesen válaszol.
-- **`.gitignore` hozzáadása**: `temp_files/` mappa kizárva a verziókövetésből, jóváhagyva és commitolva (`ff53aef`).
+- **Google AdSense jelentkezés (MON-001)**: fiók regisztrálva `szablac@gmail.com`-mal, `qwer.hu` gyökérre kötve (mert az AdSense a legfelső szintű domaint kéri, aldomain nem elég). Hitelesítés `ads.txt`-vel (a `quicktools.qwer.hu` külön dokumentumgyökere miatt ez volt a tisztább út a script-beágyazás helyett). GDPR-beleegyezés-üzenet beállítva, felülvizsgálat kérelmezve. Felvéve MON-002 (P0): `quicktools.qwer.hu` külön webhelyként hozzáadása, hogy a bevétel-jelentés ne keveredjen más `qwer.hu` aldomainek adataival.
+- **PLAT-001 tervezés**: tisztázódott, hogy egyelőre NINCS fiók/session/előfizetés (DR-001, nyilvános hozzáférés) — a kör csak a tool-regisztrációs keretre szűkült. DB-réteg döntés: mysql2 nyers SQL, nem Prisma (natív bináris deploy-kockázat a shell nélküli cPanel-környezeten). Dokumentálva: `docs/04_DOMAIN_RULES.md`, `docs/12_DATABASE_AND_MIGRATIONS.md`, `docs/11_API_MAP.md`, `CLAUDE.md` 5. szakasz kitöltve.
+- **PLAT-001 fejlesztés**: felhasználó jóváhagyta a kódolást. `tools` tábla létrehozva phpMyAdmin-ban (migráció lefutott, ellenőrizve). `server.js` mysql2-pool + `GET /api/tools` végponttal bővítve, helyi teszttel igazolva, hogy DB-hiba esetén sem szivárog ki nyers hiba (generikus 500-as JSON válasz).
 
 ## Aktuális munkafájlok
 
-- `server.js`, `package.json` (repó gyökér) – minimális Passenger-kompatibilis smoke-teszt szerver
-- `docs/01_PROJECT_FOUNDATIONS.md`, `docs/03_ARCHITECTURE.md`, `docs/09_DECISIONS.md`, `docs/roadmap/00_MASTER_PLAN.md`, `docs/10_BACKLOG.md` – frissítve ebben a körben
+- `server.js`, `package.json`, `package-lock.json` – Express + mysql2, `/api/tools` végpont
+- `db/migrations/001_create_tools_table.sql` – lefuttatva éles DB-n
+- `docs/04_DOMAIN_RULES.md`, `docs/12_DATABASE_AND_MIGRATIONS.md`, `docs/11_API_MAP.md`, `CLAUDE.md` – frissítve
 
 ## Ellenőrzési állapot
 
-- `https://quicktools.qwer.hu` böngészőből ellenőrizve (Claude Browser pane): helyes válasz, `QuickTools.hu backend - smoke test OK` + Node verzió.
-- Adatbázis és DB-user cPanel felületen létrehozva, de a `server.js` még nem kapcsolódik hozzá (Fázis 1 feladat).
+- Helyi Node teszt: `/api/tools` DB-hiba esetén helyesen generikus 500-as JSON-t ad, nem szivárogtat stacket.
+- `tools` tábla létrehozva és ellenőrizve phpMyAdmin-ban (0 sor, hiba nélkül).
+- Éles deploy és `/api/tools` élő ellenőrzés **még hátravan**.

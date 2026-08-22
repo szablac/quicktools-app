@@ -61,3 +61,10 @@
 - Dátum: 2026-08-22
 - Döntés: a `szablac/quicktools-app` GitHub-repó ideiglenesen **publikus**, a cPanel Git Version Control HTTPS-sel (hitelesítés nélkül) klónozza/pull-olja.
 - Indok: a cPanel-fiókon nincs shell-hozzáférés engedélyezve, emiatt az SSH-kulcsos klónozás nem működött megbízhatóan (néma hiba a klónozásnál). Mivel a repóban egyelőre nincs érzékeny adat, a publikussá tétel kockázatmentes átmeneti megoldás. **Felülvizsgálandó**, amint (a) shell-hozzáférés elérhetővé válik, vagy (b) a repóba érzékeny tartalom kerülne.
+
+### ADR-007 – Átmeneti monetizáció: Google AdSense
+
+- Állapot: **ELFOGADOTT**
+- Dátum: 2026-08-22
+- Döntés: a fejlesztési időszak alatt Google AdSense hirdetések kerülnek az oldalra, meglévő Google-fiókkal. A végleges monetizációs modellről (a `micro app ötletek.docx`-ban javasoltakhoz — freemium/előfizetés/kredit stb. — képest) később döntünk.
+- Indok: a felhasználó döntése; egyszerű, gyorsan bevezethető átmeneti bevételi forrás, amíg a platform-váz és az első eszközök épülnek. Előfeltétele volt egy valódi tartalmú landing oldal és adatvédelmi tájékoztató (elkészült 2026-08-22, lásd `VALTOZASOK.md`).

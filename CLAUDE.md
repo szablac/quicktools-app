@@ -68,7 +68,10 @@ Ilyenkor:
 
 ## 5. Kritikus, kötelező kódszabályok
 
-> **[KITÖLTENDŐ a projekt megismerése/fejlődése során.]** Ide kerülnek a projekt saját, visszatérő hibamintái/szabályai – pl. adattípus-csapdák, sorrend-függő route-regisztráció, közös UI-komponens-konvenciók, tranzakció-kötelezettségek. Amíg üres, nincs ilyen rögzített szabály.
+- Logikai (igaz/hamis) adatbázis-mezőhöz mindig `TINYINT(1)`-et használj, **soha ne `CHAR(1)` `'0'`/`'1'`** mintát — a testvér WorkSheet projektben ez ismétlődő hibaforrás volt (a `'0'` string JavaScriptben truthy).
+- A cPanel-fiókon **nincs shell/SSH-hozzáférés** — adatbázis-migráció kézzel, phpMyAdmin SQL-fülén fut, nem automatizált szkripttel. Kódfrissítés a szerveren: cPanel Git Version Control „Pull" → (ha változott a `package.json`) „Run NPM Install” → „Restart” a Setup Node.js App felületen.
+- A `server.js`/alkalmazás belépési pontnak Passenger-kompatibilisnek kell maradnia: `app.listen()` / `server.listen()` **argumentum nélkül** — a portot a Passenger adja át.
+- Fiók/session/előfizetés-logika egyelőre nincs a projektben (lásd `docs/04_DOMAIN_RULES.md` DR-001) — ne vezess be jogosultság-ellenőrzést olyan végponton, aminek egyelőre nyilvánosnak kell lennie.
 
 Részletek: `docs/04_DOMAIN_RULES.md`, `docs/05_SECURITY_AND_DATA_INTEGRITY.md`, `docs/12_DATABASE_AND_MIGRATIONS.md`.
 

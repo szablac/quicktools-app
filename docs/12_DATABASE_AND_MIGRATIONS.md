@@ -4,11 +4,13 @@
 
 ## Jelenlegi séma / adatmodell
 
-- [KITÖLTENDŐ – vagy hivatkozás a séma-fájlra]
+- `tools` tábla (PLAT-001 óta): `id, slug (UNIQUE), name_hu, name_en, description_hu, description_en, category, is_active, created_at`. Lásd `db/migrations/001_create_tools_table.sql`.
 
 ## Migrációs konvenció
 
-- [KITÖLTENDŐ – mappaszerkezet, elnevezés, sorrend]
+- Mappa: `db/migrations/`, fájlnév `NNN_leíró_név.sql` (monoton sorszám, `001`-től).
+- **Futtatás módja**: mivel a cPanel-fiókon nincs shell-hozzáférés (lásd ADR-006), a migrációkat egyelőre **kézzel, phpMyAdmin SQL-fülén** kell lefuttatni éles adatbázison. A fájl a repóban csak dokumentáció/verziókövetés célját szolgálja, nem fut automatikusan.
+- Adattípus-szabály: logikai (igaz/hamis) mezőkhöz mindig `TINYINT(1)` használandó, **soha ne `CHAR(1)` `'0'`/`'1'`** — a WorkSheet projektben ez ismételten dátum-/típushibát okozott (a `'0'` string JavaScriptben truthy). Lásd `CLAUDE.md` 5. szakasz.
 
 ## Új migráció kötelező tartalma
 
