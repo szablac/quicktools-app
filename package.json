@@ -1,0 +1,10 @@
+{
+  "name": "quicktools-app",
+  "version": "0.0.1",
+  "private": true,
+  "description": "QuickTools.hu - mikroeszköz-gyűjtemény platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
