@@ -23,11 +23,32 @@
 
   <p>The site is currently under active development, with the first tools launching soon. If you have questions or suggestions, feel free to reach out.</p>
 
+  <h2>Tools</h2>
+  <ul id="tools-list"><li>Loading…</li></ul>
+
   <p><a href="/">Magyar verzió</a> · <a href="/en/privacy.html">Privacy Policy</a></p>
 
   <footer>
     Contact: <a href="mailto:szablac@gmail.com">szablac@gmail.com</a><br>
     &copy; 2026 QuickTools.hu
   </footer>
+
+  <script>
+    fetch('/api/tools')
+      .then((r) => r.json())
+      .then((tools) => {
+        const list = document.getElementById('tools-list');
+        if (!tools.length) {
+          list.innerHTML = '<li>The first tools are coming soon.</li>';
+          return;
+        }
+        list.innerHTML = tools
+          .map((t) => `<li><a href="/en/${t.slug}.html">${t.name_en}</a></li>`)
+          .join('');
+      })
+      .catch(() => {
+        document.getElementById('tools-list').innerHTML = '<li>The tool list is currently unavailable.</li>';
+      });
+  </script>
 </body>
 </html>

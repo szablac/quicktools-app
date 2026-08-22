@@ -27,7 +27,7 @@
 | 2 | MON-001 | P1 | `VERIFY` | Google AdSense fiók regisztrálva (`qwer.hu` alá, `ads.txt`-vel igazolva), Google felülvizsgálatra vár | landing oldal + adatvédelmi tájékoztató (kész) |
 | 3 | MON-002 | **P0** | `TODO` | `quicktools.qwer.hu` felvétele külön webhelyként az AdSense „Webhelyek" alatt, hogy a bevétel-jelentés ne keveredjen a többi `qwer.hu` aldomain (beerbelly, bozso, builder) esetleges AdSense-adataival | MON-001 jóváhagyása |
 | 3 | PLAT-001 | P1 | `DONE` | Tool-regisztrációs keret: `tools` tábla + `GET /api/tools` végpont (fiók/előfizetés elhalasztva, DR-001) | roadmap Fázis 1 |
-| 4 | TOOL-001 | P2 | `TODO` | Favicon Generator megvalósítása a platform-vázon | PLAT-001 |
+| 4 | TOOL-001 | P2 | `VERIFY` | Favicon Generator megvalósítva (backend + HU/EN frontend), helyi teszttel igazolva, éles deploy hátravan | PLAT-001 (kész) |
 
 ## Kiemelt feladatok elfogadási feltételei
 

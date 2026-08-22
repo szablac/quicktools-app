@@ -23,11 +23,32 @@
 
   <p>Az oldal jelenleg aktív fejlesztés alatt áll, az első eszközök hamarosan érkeznek. Ha kérdésed vagy javaslatod van, vedd fel velünk a kapcsolatot.</p>
 
+  <h2>Eszközök</h2>
+  <ul id="tools-list"><li>Betöltés…</li></ul>
+
   <p><a href="/en/">English version</a> · <a href="/adatvedelem.html">Adatvédelmi tájékoztató</a></p>
 
   <footer>
     Kapcsolat: <a href="mailto:szablac@gmail.com">szablac@gmail.com</a><br>
     &copy; 2026 QuickTools.hu
   </footer>
+
+  <script>
+    fetch('/api/tools')
+      .then((r) => r.json())
+      .then((tools) => {
+        const list = document.getElementById('tools-list');
+        if (!tools.length) {
+          list.innerHTML = '<li>Hamarosan érkeznek az első eszközök.</li>';
+          return;
+        }
+        list.innerHTML = tools
+          .map((t) => `<li><a href="/${t.slug}.html">${t.name_hu}</a></li>`)
+          .join('');
+      })
+      .catch(() => {
+        document.getElementById('tools-list').innerHTML = '<li>Az eszközlista jelenleg nem elérhető.</li>';
+      });
+  </script>
 </body>
 </html>

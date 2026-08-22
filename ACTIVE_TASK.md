@@ -6,20 +6,21 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz (PLAT-001 KÉSZ) |
-| Aktív feladat | – (PLAT-001 lezárva, következő: első valódi tool, TOOL-001) |
-| Állapot | `GET /api/tools` élesben működik (`[]`), DB-kapcsolat rendben |
-| Kiemelt következő feladat | Ideiglenes debug-kód visszaállítása commitolva/pusholva/deployolva; utána TOOL-001 (Favicon Generator) |
-| Aktuális kódmódosítás | `server.js` – debug-kód eltávolítva, biztonságos generikus hibaválasz visszaállítva |
+| Fázis | 1 – Platform-váz (PLAT-001 KÉSZ), TOOL-001 fejlesztve, deploy hátravan |
+| Aktív feladat | TOOL-001 – Favicon Generator (kód+teszt kész, éles deploy még nem történt meg) |
+| Állapot | Helyi teszt sikeres: ZIP-csomag helyesen generálódik (favicon.ico + 5 PNG + webmanifest + snippet) |
+| Kiemelt következő feladat | Push → cPanel Git pull → npm install (multer, jimp, png-to-ico, archiver miatt) → restart → migráció 002 lefuttatása phpMyAdmin-ban → élő ellenőrzés |
+| Aktuális kódmódosítás | `server.js` (POST `/api/tools/favicon-generator/generate`), `public/favicon-generator.html`, `public/en/favicon-generator.html`, `public/index.html`+`en/index.html` (dinamikus tool-lista), `db/migrations/002_seed_favicon_generator.sql` |
 | Blokkoló | – (Google AdSense felülvizsgálat még fut a háttérben, MON-001, nem blokkol) |
-| Utolsó tartós döntés | DR-001/DR-002 (`docs/04_DOMAIN_RULES.md`) – fiók/session elhalasztva, nyilvános hozzáférés; mysql2 nyers SQL Prisma helyett (deploy-kockázat miatt) |
+| Utolsó tartós döntés | Favicon Generator: sima HTML+JS (nem Vue), jimp+png-to-ico+archiver (natív bináris nélküli csomagok, a Prisma-tanulság alapján) |
 
 ## Következő pontos lépések
 
-1. Commit + push a debug-kód visszaállítására, majd cPanel Git pull + restart (npm install nem kell, csak kódváltozás).
-2. Élő ellenőrzés: `/api/tools` továbbra is `[]`-t adjon, debug mezők nélkül.
-3. TOOL-001 (Favicon Generator) tervezése/fejlesztése — az első valódi tool, ami a `tools` táblába is felkerül.
-4. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001), utána MON-002 (quicktools.qwer.hu külön webhelyként).
+1. Commit + push a TOOL-001 kódra.
+2. cPanel: Git pull → **Run NPM Install** (új függőségek: multer, jimp, png-to-ico, archiver) → Restart.
+3. `db/migrations/002_seed_favicon_generator.sql` lefuttatása phpMyAdmin-ban (regisztrálja a toolt a `tools` táblában).
+4. Élő ellenőrzés: `https://quicktools.qwer.hu/favicon-generator.html` betöltődik, feltöltött képre ZIP-et ad vissza; a főoldal `/api/tools` alapján megjeleníti a linket.
+5. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001), utána MON-002 (quicktools.qwer.hu külön webhelyként).
 
 > Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
