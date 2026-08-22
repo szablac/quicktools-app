@@ -24,6 +24,7 @@ app.get('/api/tools', async (req, res) => {
     const [rows] = await pool.query(
       'SELECT slug, name_hu, name_en, category FROM tools WHERE is_active = 1 ORDER BY name_hu'
     );
+    res.set('Cache-Control', 'no-store');
     res.json(rows);
   } catch (err) {
     console.error(err);
