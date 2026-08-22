@@ -6,38 +6,37 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz (PLAT-001 KÉSZ), TOOL-001 fejlesztve, deploy hátravan |
-| Aktív feladat | TOOL-001 – Favicon Generator (kód+teszt kész, éles deploy még nem történt meg) |
-| Állapot | Helyi teszt sikeres: ZIP-csomag helyesen generálódik (favicon.ico + 5 PNG + webmanifest + snippet) |
-| Kiemelt következő feladat | Push → cPanel Git pull → npm install (multer, jimp, png-to-ico, archiver miatt) → restart → migráció 002 lefuttatása phpMyAdmin-ban → élő ellenőrzés |
-| Aktuális kódmódosítás | `server.js` (POST `/api/tools/favicon-generator/generate`), `public/favicon-generator.html`, `public/en/favicon-generator.html`, `public/index.html`+`en/index.html` (dinamikus tool-lista), `db/migrations/002_seed_favicon_generator.sql` |
+| Fázis | 1 – Platform-váz + TOOL-001 (Favicon Generator) KÉSZ, élesben ellenőrizve |
+| Aktív feladat | – (TOOL-001 lezárva) |
+| Állapot | `https://quicktools.qwer.hu/favicon-generator.html` élesben működik, a főoldal listázza; a feltöltés→ZIP-letöltés folyamat élesben tesztelve |
+| Kiemelt következő feladat | Nincs kijelölt aktív tétel — döntés kell: következő tool, vagy OPS-001 (cache-stratégia), vagy MON-001/002 (AdSense) |
+| Aktuális kódmódosítás | – (minden pusholva és deployolva) |
 | Blokkoló | – (Google AdSense felülvizsgálat még fut a háttérben, MON-001, nem blokkol) |
 | Utolsó tartós döntés | Favicon Generator: sima HTML+JS (nem Vue), jimp+png-to-ico+archiver (natív bináris nélküli csomagok, a Prisma-tanulság alapján) |
 
 ## Következő pontos lépések
 
-1. Commit + push a TOOL-001 kódra.
-2. cPanel: Git pull → **Run NPM Install** (új függőségek: multer, jimp, png-to-ico, archiver) → Restart.
-3. `db/migrations/002_seed_favicon_generator.sql` lefuttatása phpMyAdmin-ban (regisztrálja a toolt a `tools` táblában).
-4. Élő ellenőrzés: `https://quicktools.qwer.hu/favicon-generator.html` betöltődik, feltöltött képre ZIP-et ad vissza; a főoldal `/api/tools` alapján megjeleníti a linket.
-5. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001), utána MON-002 (quicktools.qwer.hu külön webhelyként).
+1. Döntés kell a felhasználótól: következő tool, OPS-001 (cache-frissülési stratégia), vagy MON-001/MON-002 (AdSense-folytatás).
+2. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001), utána MON-002 (quicktools.qwer.hu külön webhelyként).
+
+> Megjegyzés: az `/api/tools` végpont ellenőrzésekor kiderült, hogy a cPanel/Apache szintjén van egy alapértelmezett `max-age=172800` (2 nap) cache-irányelv, amit a Node-kód `no-store`-ja nem tud teljesen felülírni — ez a **visszatérő** látogatóknál késleltetheti a statikus tartalom frissülését jövőbeli deploy-oknál. Felvéve: OPS-001 (`docs/10_BACKLOG.md`).
 
 > Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
 ## Legutóbbi interakciók
 
-- **PLAT-001 fejlesztés**: felhasználó jóváhagyta a kódolást. `tools` tábla létrehozva phpMyAdmin-ban. `server.js` mysql2-pool + `GET /api/tools` végponttal bővítve, helyi teszttel igazolva a biztonságos hibaválasz.
-- **cPanel Git pull megbízhatatlansága**: a „Pull" első nekifutásra nem hozta be a legfrissebb commitot (HEAD elmaradt) — a **„Update from Remote"** gomb (nem a „Deploy HEAD Commit") a tényleges pull; ezt tudatosítani kell a jövőbeli deploy-köröknél.
-- **`/api/tools` `ER_ACCESS_DENIED_ERROR` — megoldva**: a `DB_USER` env változó `szablac_qt_app` volt, de a cPanel MySQL-felület a fióknevet **duplán** prefixelte a felhasználónév létrehozásakor, a valódi név `szablac_szablac_qt_app` lett. Miután a `DB_USER`-t erre javítottuk, élesben is `[]`-t ad az `/api/tools`. A buktató dokumentálva: `docs/12_DATABASE_AND_MIGRATIONS.md`. Az ideiglenes debug-kód (`debug_code`/`debug_message` a hibaválaszban) el lett távolítva a kódból, de a commit/push/deploy még hátravan.
+- **`/api/tools` `ER_ACCESS_DENIED_ERROR` — megoldva**: a `DB_USER` env változó `szablac_qt_app` volt, de a cPanel MySQL-felület a fióknevet duplán prefixelte, a valódi név `szablac_szablac_qt_app`. Javítva, dokumentálva (`docs/12_DATABASE_AND_MIGRATIONS.md`), debug-kód eltávolítva és deployolva.
+- **TOOL-001 fejlesztés (Favicon Generator)**: felhasználó jóváhagyta a sima HTML+JS irányt (Vue elhalasztva). Két csomag-API-kompatibilitási hibát találtam és javítottam helyi teszt közben (`png-to-ico` és `archiver` v8 más export-formátumot használ, mint a dokumentációjuk klasszikus példája). Migráció (002) regisztrálja a toolt a `tools` táblában.
+- **Élő ellenőrzés + cache-felfedezés**: a feltöltés→ZIP-letöltés folyamat élesben (`curl`-lal) igazolva, működik. Menet közben kiderült, hogy a cPanel/Apache réteg egy `max-age=172800` cache-irányelvet ad hozzá minden váloszhoz, amit a Node `no-store` fejléce nem tud teljesen felülírni — ez valódi (nem teszt-)felhasználóknál is késleltetheti a jövőbeli frissülések megjelenését. Felvéve OPS-001-ként a backlogba.
 
 ## Aktuális munkafájlok
 
-- `server.js` – debug-kód eltávolítva (biztonságos generikus hibaválasz), commit/push/deploy még hátravan
-- `db/migrations/001_create_tools_table.sql` – lefuttatva éles DB-n
-- `docs/12_DATABASE_AND_MIGRATIONS.md` – DB-user duplaprefix buktató dokumentálva
-- `docs/10_BACKLOG.md` – PLAT-001 → DONE
+- `server.js` – `/api/tools/favicon-generator/generate` végpont, `no-store` cache fejléc
+- `public/favicon-generator.html`, `public/en/favicon-generator.html` – éles, működő tool-oldalak
+- `db/migrations/002_seed_favicon_generator.sql` – lefuttatva éles DB-n
 
 ## Ellenőrzési állapot
 
-- `https://quicktools.qwer.hu/api/tools` élesben `[]`-t ad, DB-kapcsolat működik.
-- A debug-kód eltávolítás utáni újbóli élő ellenőrzés **még hátravan** (lásd Következő pontos lépések).
+- `https://quicktools.qwer.hu/api/tools` élesben helyesen listázza a Favicon Generatort.
+- `https://quicktools.qwer.hu/api/tools/favicon-generator/generate` élesben, valódi képfeltöltéssel tesztelve (`curl`): helyes 8 fájlos ZIP-et ad vissza.
+- Felhasználó saját böngészőjében is megerősítette: a főoldal helyesen mutatja a Favicon Generátor linket.
