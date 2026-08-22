@@ -26,7 +26,7 @@
 | 1 | PROD-001 | P1 | `DONE` | Monetizációs modell pontosítása → átmeneti döntés: Google AdSense (ADR-007) | – |
 | 2 | MON-001 | P1 | `VERIFY` | Google AdSense fiók regisztrálva (`qwer.hu` alá, `ads.txt`-vel igazolva), Google felülvizsgálatra vár | landing oldal + adatvédelmi tájékoztató (kész) |
 | 3 | MON-002 | **P0** | `TODO` | `quicktools.qwer.hu` felvétele külön webhelyként az AdSense „Webhelyek" alatt, hogy a bevétel-jelentés ne keveredjen a többi `qwer.hu` aldomain (beerbelly, bozso, builder) esetleges AdSense-adataival | MON-001 jóváhagyása |
-| 3 | PLAT-001 | P1 | `READY` | Tool-regisztrációs keret: `tools` tábla + `GET /api/tools` végpont (fiók/előfizetés elhalasztva, DR-001) | roadmap Fázis 1 |
+| 3 | PLAT-001 | P1 | `DONE` | Tool-regisztrációs keret: `tools` tábla + `GET /api/tools` végpont (fiók/előfizetés elhalasztva, DR-001) | roadmap Fázis 1 |
 | 4 | TOOL-001 | P2 | `TODO` | Favicon Generator megvalósítása a platform-vázon | PLAT-001 |
 
 ## Kiemelt feladatok elfogadási feltételei
@@ -41,9 +41,9 @@
 
 ### PLAT-001
 
-- [ ] `db/migrations/001_create_tools_table.sql` lefuttatva phpMyAdmin-ban, ellenőrző lekérdezéssel igazolva
-- [ ] `server.js` mysql2-connection poollal kapcsolódik a DB-hez (env változókból)
-- [ ] `GET /api/tools` végpont válaszol (üres tömb, amíg nincs feltöltött tool)
-- [ ] Nyers SQL-/stack-hiba nem szivárog ki a kliens felé hibaválaszban
+- [x] `db/migrations/001_create_tools_table.sql` lefuttatva phpMyAdmin-ban, ellenőrző lekérdezéssel igazolva
+- [x] `server.js` mysql2-connection poollal kapcsolódik a DB-hez (env változókból)
+- [x] `GET /api/tools` végpont válaszol (üres tömb, amíg nincs feltöltött tool) — élesben ellenőrizve: `[]`
+- [x] Nyers SQL-/stack-hiba nem szivárog ki a kliens felé hibaválaszban
 
 > Vue frontend alapváz és fiók-keret **nem** része ennek a tételnek — lásd `docs/04_DOMAIN_RULES.md` DR-001 (fiók/előfizetés elhalasztva).
