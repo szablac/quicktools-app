@@ -61,6 +61,7 @@
 - Dátum: 2026-08-22
 - Döntés: a `szablac/quicktools-app` GitHub-repó ideiglenesen **publikus**, a cPanel Git Version Control HTTPS-sel (hitelesítés nélkül) klónozza/pull-olja.
 - Indok: a cPanel-fiókon nincs shell-hozzáférés engedélyezve, emiatt az SSH-kulcsos klónozás nem működött megbízhatóan (néma hiba a klónozásnál). Mivel a repóban egyelőre nincs érzékeny adat, a publikussá tétel kockázatmentes átmeneti megoldás. **Felülvizsgálandó**, amint (a) shell-hozzáférés elérhetővé válik, vagy (b) a repóba érzékeny tartalom kerülne.
+- **Végleges megerősítés (2026-08-23)**: a felhasználó egy cPanel-ben generált SSH-kulcspárral (`id_rsa`, jelszóval védett) közvetlen kapcsolódási tesztet végeztünk (`ssh szablac@185.75.192.93`). A hitelesítés **sikeres** volt (kulcs + felhasználónév helyes), de a szerver egyértelmű választ adott: *"Shell access is not enabled on your account! If you need shell access please contact support."* — tehát ez nem technikai hiba vagy hiányzó beállítás, hanem a szolgáltató tudatos korlátozása a csomagon. A shell-hozzáférés engedélyezéséhez a szolgáltatónál kell jelezni/kérni, vagy magasabb csomagra váltani. Amíg ez nem történik meg, a jelen ADR (git deploy HTTPS-sel, kézi phpMyAdmin-migráció, cPanel GUI-alapú deploy) érvényben marad.
 
 ### ADR-007 – Átmeneti monetizáció: Google AdSense
 
@@ -131,3 +132,14 @@
 - **Ismeretlen/fel nem ismerhető IP** (pl. helyi teszt, privát tartomány) esetén a magyar oldal marad az alapértelmezett — a célközönség elsődlegesen magyar (`docs/01_PROJECT_FOUNDATIONS.md`), ezért a biztonságosabb feltételezés a hazai nyelv.
 - **Adatvédelmi vonatkozás**: az IP-címet a döntéshez átmenetileg használjuk, nem tároljuk; a sütibe csak a nyelvi eredmény kerül. `adatvedelem.html`/`en/privacy.html` és `sutik.html`/`en/cookies.html` frissítve ennek megfelelően (a `qt_lang` mint technikailag elengedhetetlen süti feltüntetve, hozzájárulás nélkül is jogszerű).
 - Ellenőrzés: a döntési logikát (cookie már van / magyar IP / külföldi IP / ismeretlen IP, mind a négy eset) mock kérés-válasz objektumokkal, valamint a `geoip-lite` országfelismerését több ismert magyar és külföldi IP-tartománnyal (HU, US, AU, DE, SK) node-ban igazoltuk. Élesben is igazolva `curl`-lal (`X-Forwarded-For` fejléc szimulációval): külföldi IP → 302 + `qt_lang=en`; magyar IP → 200 + `qt_lang=hu`; meglévő `qt_lang=hu` süti mellett külföldi IP → 200, nincs új átirányítás/süti-felülírás.
+
+### ADR-015 – SEO-alapok: dinamikus sitemap + canonical/hreflang minden oldalpáron
+
+- Állapot: **ELFOGADOTT**
+- Dátum: 2026-08-23
+- Döntés: (1) `public/robots.txt` — mindent enged, hivatkozik a sitemapra. (2) `GET /sitemap.xml` — **dinamikusan** generált a `server.js`-ben, a `tools` táblából (ugyanaz a forrás, mint a `/api/tools`-nál), nem statikus fájl. (3) Mind a 9 HU/EN oldalpár (18 fájl) `<head>`-jébe `rel="canonical"` (önmagára) és `rel="alternate" hreflang="hu/en/x-default"` címkék kerültek.
+- Indok: a felhasználó jó Google-helyezést szeretne; ezek a ténylegesen helyezést/indexelést befolyásoló, korábban hiányzó alapelemek (szemben a CSS beágyazásával, aminek nincs SEO-hatása).
+- **Miért dinamikus sitemap, nem statikus fájl**: a tools tábla már most 6 tétel, és minden új tool hozzáadásakor (eddig 6 alkalommal történt) egy statikus sitemapot el kellene felejteni frissíteni — ez pontosan az a fajta csendes elavulás, amit a `/api/tools` minta is elkerül. A `/sitemap.xml` végpont `Cache-Control: public, max-age=3600`-at kap (nem esik az OPS-001/ADR-011 `/api`-only `no-store` middleware alá, mert nem `/api` előtagú — ez tudatos, hiszen egy sitemapnak nem kell azonnal frissülnie minden kéréshez, az 1 órás cache ésszerű).
+- **hreflang `x-default`**: mindig a magyar verzióra mutat, összhangban az I18N-001 (ADR-014) saját alapértelmezésével (ismeretlen látogató → magyar oldal).
+- **Tudatosan kimaradt ebből a körből**: schema.org strukturált adat az egyes toolokhoz — inkább "nice to have", nem alapkövetelmény, külön kérésre pótolható.
+- Ellenőrzés: a sitemap XML-generáló logikáját Node.js-ben önállóan futtatva igazoltuk (18 `<url>` bejegyzés, helyes hreflang-párosítás — beleértve az eltérő fájlnevű `adatvedelem.html`/`en/privacy.html` és `sutik.html`/`en/cookies.html` párokat is), `node --check`-kel szintaktikailag hibátlan; mind a 18 HTML-fájlban `grep`-pel igazolva a `canonical` címke jelenléte.

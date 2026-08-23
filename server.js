@@ -78,6 +78,48 @@ app.get('/api/tools', async (req, res) => {
   }
 });
 
+const SITEMAP_BASE = 'https://quicktools.qwer.hu';
+
+function sitemapUrlEntry(huPath, enPath, self) {
+  const selfPath = self === 'hu' ? huPath : enPath;
+  return `  <url>
+    <loc>${SITEMAP_BASE}${selfPath}</loc>
+    <xhtml:link rel="alternate" hreflang="hu" href="${SITEMAP_BASE}${huPath}"/>
+    <xhtml:link rel="alternate" hreflang="en" href="${SITEMAP_BASE}${enPath}"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="${SITEMAP_BASE}${huPath}"/>
+  </url>`;
+}
+
+// A tools tábla a forrásigazság (mint /api/tools-nál) — így új tool hozzáadásakor
+// a sitemap sosem marad el a valóságtól, nem kell kézzel karbantartani (SEO-001).
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT slug FROM tools WHERE is_active = 1 ORDER BY slug');
+
+    const pairs = [
+      ['/', '/en/'],
+      ['/adatvedelem.html', '/en/privacy.html'],
+      ['/sutik.html', '/en/cookies.html'],
+      ...rows.map((r) => [`/${r.slug}.html`, `/en/${r.slug}.html`]),
+    ];
+
+    const entries = [];
+    for (const [huPath, enPath] of pairs) {
+      entries.push(sitemapUrlEntry(huPath, enPath, 'hu'));
+      entries.push(sitemapUrlEntry(huPath, enPath, 'en'));
+    }
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries.join('\n')}\n</urlset>\n`;
+
+    res.set('Content-Type', 'application/xml');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(xml);
+  } catch (err) {
+    console.error(err);
+    res.status(500).type('text/plain').send('Sitemap generation error.');
+  }
+});
+
 const CONTACT_RATE_LIMIT = { windowMs: 60 * 60 * 1000, max: 5 };
 const contactRateLimitHits = new Map();
 
