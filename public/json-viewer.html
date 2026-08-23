@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Viewer – QuickTools.hu</title>
+<meta name="description" content="Illessz be egy JSON-t, és azonnal áttekinthető, összecsukható fastruktúrát kapsz — validálással, hibajelzéssel.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #f9f8f5; --card: #ffffff; --card-muted: #f2f0eb; --border: #ece9e2;
+    --text: #2b2e2c; --muted: #6b6f6a; --accent: #5b7f6f; --accent-dark: #46655a; --accent-tint: #e9efe9;
+    --err: #b5482f; --err-tint: #f7e9e5;
+    --j-key: #2b2e2c; --j-string: #4a6fa5; --j-number: #5b7f6f; --j-bool: #b5673f; --j-punc: #a3a099;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 32px; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 32px 0; }
+  .logo { font-weight: 700; font-size: 19px; }
+  .back { font-size: 14px; color: var(--muted); }
+  header.hero { padding: 8px 0 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .icon-lg { width: 56px; height: 56px; border-radius: 18px; background: var(--accent-tint); display: flex; align-items: center; justify-content: center; }
+  h1 { margin: 0; font-size: 28px; font-weight: 700; }
+  .sub { margin: 0; font-size: 15px; line-height: 1.7; color: var(--muted); max-width: 480px; }
+
+  .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  @media (max-width: 800px) { .panes { grid-template-columns: 1fr; } }
+  .pane { display: flex; flex-direction: column; gap: 10px; }
+  .pane-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .pane-label .filelink { font-weight: 600; text-transform: none; letter-spacing: normal; font-size: 12px; cursor: pointer; }
+
+  textarea {
+    width: 100%; height: 420px; resize: vertical; border-radius: 16px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text); padding: 16px; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.55; outline: none;
+  }
+  textarea:focus { border-color: var(--accent); }
+
+  .tree-box {
+    height: 420px; overflow: auto; border-radius: 16px; border: 1px solid var(--border);
+    background: var(--card); padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6;
+  }
+  .tree-box.empty { display: flex; align-items: center; justify-content: center; color: var(--muted); font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; padding: 32px; }
+  .tree-box.error { color: var(--err); background: var(--err-tint); border-color: var(--err); white-space: pre-wrap; font-size: 13px; }
+
+  .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 36px; flex-wrap: wrap; }
+  .btn { padding: 12px 26px; border-radius: 100px; border: none; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(91,127,111,0.3); }
+  .btn-ghost { background: var(--card-muted); color: var(--text); }
+  .btn-ghost:hover { background: var(--border); }
+  .status { font-size: 13px; color: var(--muted); margin-left: auto; }
+  .status.ok { color: var(--accent-dark); font-weight: 600; }
+
+  /* JSON tree */
+  .jt-row { display: flex; }
+  .jt-toggle { width: 16px; flex-shrink: 0; color: var(--j-punc); cursor: pointer; user-select: none; text-align: center; }
+  .jt-toggle:empty { cursor: default; }
+  .jt-key { color: var(--j-key); font-weight: 600; }
+  .jt-colon { color: var(--j-punc); margin-right: 4px; }
+  .jt-string { color: var(--j-string); }
+  .jt-number { color: var(--j-number); }
+  .jt-bool, .jt-null { color: var(--j-bool); }
+  .jt-punc { color: var(--j-punc); }
+  .jt-count { color: var(--j-punc); font-style: italic; margin-left: 4px; }
+  .jt-children { margin-left: 16px; border-left: 1px solid var(--border); padding-left: 8px; }
+  .jt-children.collapsed { display: none; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; padding: 12px 0 56px; }
+  @media (max-width: 640px) { .steps { grid-template-columns: 1fr; } }
+  .step { border-radius: 20px; padding: 24px; background: var(--card); border: 1px solid var(--border); text-align: center; }
+  .step-num { font-size: 22px; margin-bottom: 8px; color: var(--accent); font-weight: 700; }
+  .step-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .step-desc { font-size: 12px; line-height: 1.5; color: var(--muted); }
+
+  footer { padding: 24px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+  input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <div class="logo">QuickTools.hu</div>
+      <div class="back">&larr; <a href="/">Összes eszköz</a></div>
+    </nav>
+
+    <header class="hero">
+      <div class="icon-lg">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><path d="M8 3H6a2 2 0 00-2 2v3a2 2 0 01-2 2 2 2 0 012 2v3a2 2 0 002 2h2M16 3h2a2 2 0 012 2v3a2 2 0 002 2 2 2 0 00-2 2v3a2 2 0 01-2 2h-2"/></svg>
+      </div>
+      <h1>JSON Viewer</h1>
+      <p class="sub">Illessz be egy JSON-t — azonnal formázott, összecsukható fastruktúrát kapsz, hibajelzéssel. Semmi nem hagyja el a böngésződet.</p>
+    </header>
+
+    <div class="panes">
+      <div class="pane">
+        <div class="pane-label">
+          <span>Bemenet</span>
+          <span class="filelink" id="file-trigger">Fájl feltöltése</span>
+          <input type="file" id="file-input" accept="application/json,.json">
+        </div>
+        <textarea id="input" spellcheck="false" placeholder='{"példa": true, "szám": 42, "lista": [1, 2, 3]}'></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-label"><span>Nézet</span></div>
+        <div class="tree-box empty" id="output">A formázott nézet itt jelenik meg.</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="format-btn">Formázás</button>
+      <button class="btn btn-ghost" id="copy-btn">Másolás</button>
+      <button class="btn btn-ghost" id="clear-btn">Törlés</button>
+      <button class="btn btn-ghost" id="expand-btn">Összes kinyitása</button>
+      <button class="btn btn-ghost" id="collapse-btn">Összes becsukása</button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Beillesztés</div>
+        <div class="step-desc">Illessz be JSON-t, vagy tölts fel egy .json fájlt.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Formázás</div>
+        <div class="step-desc">Azonnali validálás, hiba esetén pontos jelzés.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Böngészés</div>
+        <div class="step-desc">Nyisd, csukd az ágakat, vagy másold a végeredményt.</div>
+      </div>
+    </div>
+
+    <footer>
+      <div><a href="/adatvedelem.html">Adatvédelmi tájékoztató</a> &middot; <a href="/sutik.html">Cookie szabályzat</a></div>
+    </footer>
+  </div>
+
+  <script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const status = document.getElementById('status');
+    const fileInput = document.getElementById('file-input');
+
+    let lastFormatted = '';
+
+    function escapeText(s) { return String(s); }
+
+    function jsonTypeClass(v) {
+      if (v === null) return 'jt-null';
+      switch (typeof v) {
+        case 'string': return 'jt-string';
+        case 'number': return 'jt-number';
+        case 'boolean': return 'jt-bool';
+        default: return '';
+      }
+    }
+
+    function renderValueSpan(v) {
+      const span = document.createElement('span');
+      span.className = jsonTypeClass(v);
+      if (v === null) span.textContent = 'null';
+      else if (typeof v === 'string') span.textContent = JSON.stringify(v);
+      else span.textContent = String(v);
+      return span;
+    }
+
+    function buildNode(value, keyLabel, isLast) {
+      const row = document.createElement('div');
+      row.className = 'jt-row';
+
+      const isContainer = value !== null && typeof value === 'object';
+      const toggle = document.createElement('span');
+      toggle.className = 'jt-toggle';
+      row.appendChild(toggle);
+
+      const content = document.createElement('span');
+
+      if (keyLabel !== undefined) {
+        const keySpan = document.createElement('span');
+        keySpan.className = 'jt-key';
+        keySpan.textContent = JSON.stringify(keyLabel);
+        content.appendChild(keySpan);
+        const colon = document.createElement('span');
+        colon.className = 'jt-colon';
+        colon.textContent = ':';
+        content.appendChild(colon);
+      }
+
+      if (isContainer) {
+        const isArray = Array.isArray(value);
+        const entries = isArray ? value.map((v, i) => [i, v]) : Object.entries(value);
+        const openPunc = document.createElement('span');
+        openPunc.className = 'jt-punc';
+        openPunc.textContent = isArray ? '[' : '{';
+        content.appendChild(openPunc);
+
+        if (entries.length === 0) {
+          const closeInline = document.createElement('span');
+          closeInline.className = 'jt-punc';
+          closeInline.textContent = isArray ? ']' : '}';
+          content.appendChild(closeInline);
+        } else {
+          const count = document.createElement('span');
+          count.className = 'jt-count';
+          count.textContent = entries.length + (isArray ? (entries.length === 1 ? ' elem' : ' elem') : (entries.length === 1 ? ' kulcs' : ' kulcs'));
+          content.appendChild(count);
+
+          toggle.textContent = '▾';
+          toggle.style.cursor = 'pointer';
+
+          const childWrap = document.createElement('div');
+          childWrap.className = 'jt-children';
+          entries.forEach(([k, v], idx) => {
+            childWrap.appendChild(buildNode(v, isArray ? undefined : k, idx === entries.length - 1));
+          });
+
+          const closeLine = document.createElement('div');
+          const closePunc = document.createElement('span');
+          closePunc.className = 'jt-punc';
+          closePunc.textContent = isArray ? ']' : '}';
+          closeLine.appendChild(closePunc);
+
+          toggle.addEventListener('click', () => {
+            const collapsed = childWrap.classList.toggle('collapsed');
+            toggle.textContent = collapsed ? '▸' : '▾';
+          });
+
+          row.appendChild(content);
+          const wrapper = document.createElement('div');
+          wrapper.appendChild(row);
+          wrapper.appendChild(childWrap);
+          wrapper.appendChild(closeLine);
+          return wrapper;
+        }
+      } else {
+        content.appendChild(renderValueSpan(value));
+      }
+
+      row.appendChild(content);
+      return row;
+    }
+
+    function formatNow() {
+      const raw = input.value.trim();
+      if (!raw) {
+        output.className = 'tree-box empty';
+        output.textContent = 'A formázott nézet itt jelenik meg.';
+        status.textContent = '';
+        status.className = 'status';
+        lastFormatted = '';
+        return;
+      }
+      try {
+        const data = JSON.parse(raw);
+        output.className = 'tree-box';
+        output.innerHTML = '';
+        output.appendChild(buildNode(data, undefined, true));
+        lastFormatted = JSON.stringify(data, null, 2);
+        status.textContent = 'Érvényes JSON.';
+        status.className = 'status ok';
+      } catch (err) {
+        output.className = 'tree-box error';
+        output.textContent = 'Hibás JSON: ' + err.message;
+        status.textContent = '';
+        status.className = 'status';
+        lastFormatted = '';
+      }
+    }
+
+    document.getElementById('format-btn').addEventListener('click', formatNow);
+
+    document.getElementById('copy-btn').addEventListener('click', async () => {
+      if (!lastFormatted) { formatNow(); if (!lastFormatted) return; }
+      try {
+        await navigator.clipboard.writeText(lastFormatted);
+        status.textContent = 'Vágólapra másolva.';
+        status.className = 'status ok';
+      } catch {
+        status.textContent = 'Másolás nem sikerült.';
+        status.className = 'status';
+      }
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', () => {
+      input.value = '';
+      formatNow();
+    });
+
+    document.getElementById('expand-btn').addEventListener('click', () => {
+      output.querySelectorAll('.jt-children.collapsed').forEach((el) => el.classList.remove('collapsed'));
+      output.querySelectorAll('.jt-toggle').forEach((el) => { if (el.textContent === '▸') el.textContent = '▾'; });
+    });
+
+    document.getElementById('collapse-btn').addEventListener('click', () => {
+      output.querySelectorAll('.jt-children').forEach((el) => el.classList.add('collapsed'));
+      output.querySelectorAll('.jt-toggle').forEach((el) => { if (el.textContent === '▾') el.textContent = '▸'; });
+    });
+
+    document.getElementById('file-trigger').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { input.value = reader.result; formatNow(); };
+      reader.readAsText(file);
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') formatNow();
+    });
+  </script>
+</body>
+</html>
