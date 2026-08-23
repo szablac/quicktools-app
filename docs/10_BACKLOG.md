@@ -30,7 +30,7 @@
 | 4 | TOOL-001 | P2 | `DONE` | Favicon Generator megvalósítva (backend + HU/EN frontend), élesben ellenőrizve (feltöltés → ZIP-letöltés működik) | PLAT-001 (kész) |
 | 5 | OPS-001 | P2 | `TODO` | Statikus tartalom (HTML/JS) cache-frissülési stratégia: az Apache-szintű `max-age=172800` alapértelmezés miatt visszatérő látogatóknál akár 2 napig elmaradhat egy frissülés | – |
 | 6 | PROD-002 | **P0** | `TODO` | Kapcsolattartási elérhetőség visszapótlása az adatvédelmi tájékoztatóba (ADR-009 szerint jelenleg eltávolítva) — a domain véglegesítése VAGY az AdSense éles indulása előtt kötelező | domain véglegesítés vagy MON-001 jóváhagyás |
-| 7 | TOOL-002 | P2 | `VERIFY` | JSON Viewer megvalósítva (teljesen kliens-oldali, backend nélkül), helyi böngésző-teszttel igazolva, éles deploy hátravan | PLAT-001 (kész) |
+| 7 | TOOL-002 | P2 | `DONE` | JSON Viewer megvalósítva (teljesen kliens-oldali, backend nélkül), élesben ellenőrizve | PLAT-001 (kész) |
 
 ## Kiemelt feladatok elfogadási feltételei
 
