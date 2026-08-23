@@ -6,35 +6,33 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz + TOOL-001/002/003 KÉSZ; PROD-002 KÉSZ; OPS-001 kódja kész, élő ellenőrzés hátravan |
-| Aktív feladat | OPS-001 — `/api` middleware (`Cache-Control: no-store` minden API-válaszra) helyben kész, még nincs commitolva/deployolva |
-| Állapot | Élő fejléc-vizsgálattal (`curl -I`) kiderült, hogy az Apache/Passenger réteg minden választ megtold egy saját, második `Cache-Control`/`Expires` fejléccel (MIME-típus szerint, nem-HTML → 2 nap alapértelmezett) — ez a Node fejlécét nem felülírja, hanem kiegészíti. Statikus HTML-nél véletlenül nincs élő gond (mindkét réteg `max-age=0`), de dinamikus GET-végpontoknál kockázatos, ha kimarad az explicit `no-store`. Megoldás: ADR-011 szerint egy `/api` middleware, nem Apache-szintű beavatkozás. |
-| Kiemelt következő feladat | Commit + push jóváhagyása, majd cPanel Pull+Restart, majd élő fejléc-ellenőrzés (`curl -I` a `/api/tools`, `/api/contact` végpontokon) |
-| Aktuális kódmódosítás | `server.js` — `/api` middleware hozzáadva, a korábbi `/api/tools`-specifikus `no-store` sor törölve (redundáns lett) |
+| Fázis | 1 – Platform-váz + TOOL-001/002/003 KÉSZ; PROD-002 KÉSZ; OPS-001 KÉSZ |
+| Aktív feladat | – (nincs kijelölt aktív tétel) |
+| Állapot | Az `/api` middleware élesben igazolva: `GET /api/tools` és `POST /api/contact` is `no-store`-t küld; statikus HTML-oldalak fejléce változatlan |
+| Kiemelt következő feladat | Döntés kell: következő tool, vagy MON-001/002 (AdSense) folytatása |
+| Aktuális kódmódosítás | – (minden pusholva és deployolva: `e1b7954`, `c2b335e`, `5545ffb`) |
 | Blokkoló | – (Google AdSense felülvizsgálat, MON-001, a háttérben fut, nem blokkol) |
-| Utolsó tartós döntés | ADR-011 (2026-08-23) — cache-fejléc middleware Node-oldalon, nem Apache/`.htaccess`-szinten (törékeny lenne, cPanel regenerálhatja) |
+| Utolsó tartós döntés | ADR-011 (2026-08-23) — cache-fejléc middleware Node-oldalon, nem Apache/`.htaccess`-szinten |
 
 ## Következő pontos lépések
 
-1. Commit + push jóváhagyása az OPS-001 middleware-re.
-2. cPanel Git Version Control „Pull” + Setup Node.js App „Restart”.
-3. Élő ellenőrzés: `curl -I` a `/api/tools`-ra és `/api/contact`-ra — mindkettőn `Cache-Control: no-store`-nak kell szerepelnie (az Apache-féle második fejléccel együtt is).
-4. Ezután OPS-001 lezárható a backlogban; utána újra döntés kell: következő tool, vagy MON-001/002 (AdSense) folytatása.
-5. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
+1. Döntés kell a felhasználótól: következő tool, vagy MON-001/MON-002 (AdSense-folytatás).
+2. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001).
+3. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
 
 > Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
 ## Legutóbbi interakciók
 
-- **PROD-002 lezárva**: kapcsolatfelvételi űrlap (`POST /api/contact`, honeypot + rate-limit, `contact_messages` tábla) élesben ellenőrizve, egy `utf8mb4` kódolási hiba felfedezve és javítva (commit `e1b7954`, `c2b335e`), backlog + `ACTIVE_TASK.md` lezárva (`e92217a`).
-- **OPS-001 részletes átbeszélése**: a felhasználó kérésére élő `curl -I` vizsgálattal pontosítottuk az eredeti feltételezést — kiderült, hogy a korábban dokumentált „2 napos elavulás” statikus HTML-re már nem áll fenn (Node és Apache alapértelmezése egyezik), a valódi reziduális kockázat a jövőbeli dinamikus GET-végpontoknál van, ha kimarad az explicit `no-store`.
-- **OPS-001 implementáció**: egy `/api` útvonal-előtagra illesztett Express middleware mostantól minden API-választ egységesen `no-store`-ra állít, a korábbi, csak `/api/tools`-ra explicit beállított sor törölve (redundáns). `node --check` hibátlan. ADR-011 rögzítve. Még nincs commitolva.
+- **PROD-002 lezárva**: kapcsolatfelvételi űrlap (`POST /api/contact`, honeypot + rate-limit, `contact_messages` tábla) élesben ellenőrizve, egy `utf8mb4` kódolási hiba felfedezve és javítva.
+- **OPS-001 részletes átbeszélése és implementáció**: a felhasználó kérésére élő `curl -I` vizsgálattal pontosítottuk az eredeti feltételezést (statikus HTML-re nincs élő gond, a valódi kockázat jövőbeli dinamikus GET-végpontoknál van). Megoldás: `/api` Express middleware, ami minden API-válaszra egységesen `no-store`-t tesz (ADR-011).
+- **OPS-001 élő igazolás**: commit `5545ffb`, push, cPanel Pull+Restart, majd `curl -I` mindkét érintett végponton (`/api/tools`, `/api/contact`) megerősítette a `no-store` jelenlétét; statikus HTML fejléce nem változott. Backlog és decisions-doksi frissítve, OPS-001 → `DONE`.
 
 ## Aktuális munkafájlok
 
-- `server.js` – `/api` middleware (`Cache-Control: no-store`), helyben módosítva, még nincs commitolva
+- `server.js` – `/api` middleware (`Cache-Control: no-store`), élesben ellenőrizve
 
 ## Ellenőrzési állapot
 
-- `node --check server.js`: szintaktikailag hibátlan.
-- **Még nincs ellenőrizve élesben**: a middleware tényleges hatása (`curl -I` a deploy után).
+- `https://quicktools.qwer.hu/api/tools` és `.../api/contact` élesben `curl -I`-vel igazolva: `no-store` jelen van.
+- `https://quicktools.qwer.hu/adatvedelem.html` fejléce nem változott a middleware bevezetése után (nincs regresszió).
