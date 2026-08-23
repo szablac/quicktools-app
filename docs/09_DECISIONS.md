@@ -83,3 +83,12 @@
 - Döntés: a `szablac@gmail.com` email cím és a „© 2026 QuickTools.hu" copyright-sor eltávolítva minden oldalról, **beleértve** az adatvédelmi tájékoztató szövegét is (adatkezelői elérhetőség, érintetti jogok szakasz).
 - Indok: a felhasználó döntése — (1) elkerülni a bot-scraping miatti spam-forgalmat, (2) a domainnév (`quicktools.qwer.hu`) nem végleges, ezért korai lenne rá copyright-márkanevet kötni.
 - **Kockázat, amit tudatosan vállal a felhasználó**: az adatvédelmi tájékoztatóban jelenleg nincs semmilyen látható kapcsolattartási elérhetőség az adatkezelőhöz — ez a GDPR szerint általában elvárt lenne, amint tényleges személyes adatkezelés (pl. AdSense-sütik) élesedik. **Felülvizsgálandó**, mielőtt az AdSense (MON-001) ténylegesen élesedik, vagy a domain véglegesül.
+
+### ADR-010 – AI háttéreltávolítás: engedékeny licencű lánc, kliens-oldalon
+
+- Állapot: **ELFOGADOTT**
+- Dátum: 2026-08-23
+- Döntés: a Termékfotó Optimalizáló opcionális háttéreltávolítás-funkciója a `modern-rembg` (MIT) csomagot használja, `onnxruntime-web` (MIT) peer-dependency-vel, u2netp.onnx modellel (Apache 2.0). Mindhárom komponens CDN-ről (unpkg), import map-pel töltődik be — nincs npm-telepítés, nincs build-lépés, teljesen kliens-oldali (WASM), nincs szerver-terhelés.
+- Indok: a vezető, legjobb minőségű megoldás (`@imgly/background-removal`) **AGPL** licencű, ami hálózaton keresztüli használat esetén is kiterjeszti a copyleft-kötelezettséget — ez összeegyeztethetetlen egy esetleges jövőbeli zárt forráskódú/előfizetéses modellel (lásd a `micro app ötletek.docx` monetizációs ötleteit). A `modern-rembg`+u2netp lánc minden eleme MIT/Apache 2.0, nincs forráskód-nyilvánossági kötelezettség.
+- **Kockázat, amit tudatosan vállal a felhasználó**: a `modern-rembg` egyetlen karbantartó által gondozott, alacsony release-aktivitású csomag (utolsó verzió kb. egy éve) — hosszabb távon karbantartási/ellátási-lánc kockázatot jelent. Ha a CDN-ről betöltött verzió valaha elérhetetlenné válna vagy komoly hibát találnánk benne, alternatívát kell keresni.
+- **Technikai buktató, amit érdemes rögzíteni**: az `onnxruntime-web` csomag `dist/ort.min.js` fájlja **nem** valódi ESM (nincs benne névvel exportált `InferenceSession` stb.) — a helyes import-map célpont a `dist/esm/ort.min.js`. Enélkül a `import * as ort from 'onnxruntime-web'` némán elbukik egy "does not provide an export named ..." hibával.

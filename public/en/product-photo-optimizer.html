@@ -6,6 +6,13 @@
 <title>Product Photo Optimizer – QuickTools.hu</title>
 <meta name="description" content="Upload your product photo — white background, soft shadow, centering, 1200×1200, automatic WebP export in one click.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<script type="importmap">
+{
+  "imports": {
+    "onnxruntime-web": "https://unpkg.com/onnxruntime-web@1.18.0/dist/esm/ort.min.js"
+  }
+}
+</script>
 <style>
   :root {
     --bg: #f9f8f5; --card: #ffffff; --card-muted: #f2f0eb; --border: #ece9e2;
@@ -31,6 +38,10 @@
   .dropzone input { display: none; }
   .dz-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
   .dz-hint { font-size: 12px; color: var(--muted); }
+
+  .rembg-toggle { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 13px; color: var(--text); cursor: pointer; }
+  .rembg-toggle input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .rembg-hint { font-size: 11px; color: var(--muted); margin-top: 2px; margin-left: 24px; }
 
   .preview-wrap { border-radius: 24px; border: 1px solid var(--border); background: var(--card); padding: 16px; }
   .preview-frame { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 16px; overflow: hidden; background: repeating-conic-gradient(#f2f0eb 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
@@ -67,15 +78,22 @@
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
       </div>
       <h1>Product Photo Optimizer</h1>
-      <p class="sub">Upload your product photo — white background, soft shadow, centering, 1200×1200 size, automatic WebP compression. Not a background remover: it doesn't cut out your existing background.</p>
+      <p class="sub">Upload your product photo — optionally remove the background, then white background, soft shadow, centering, 1200×1200 size, automatic WebP compression.</p>
     </header>
 
     <div class="panes">
-      <label class="dropzone" id="dropzone" for="image-input">
-        <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp,image/gif" required>
-        <div class="dz-title">Drag your photo here, click to choose, or paste (Ctrl+V)</div>
-        <div class="dz-hint">PNG · JPEG · WEBP · GIF · pasted screenshots work too</div>
-      </label>
+      <div>
+        <label class="dropzone" id="dropzone" for="image-input">
+          <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp,image/gif" required>
+          <div class="dz-title">Drag your photo here, click to choose, or paste (Ctrl+V)</div>
+          <div class="dz-hint">PNG · JPEG · WEBP · GIF · pasted screenshots work too</div>
+        </label>
+        <label class="rembg-toggle">
+          <input type="checkbox" id="rembg-checkbox">
+          Remove background (AI)
+        </label>
+        <div class="rembg-hint">Downloads a ~4 MB model to your browser on first use.</div>
+      </div>
       <div class="preview-wrap">
         <div class="preview-frame">
           <canvas id="preview-canvas" width="1200" height="1200" style="display:none"></canvas>
@@ -119,6 +137,7 @@
     const emptyState = document.getElementById('preview-empty');
     const downloadBtn = document.getElementById('download-btn');
     const status = document.getElementById('status');
+    const rembgCheckbox = document.getElementById('rembg-checkbox');
     const ctx = canvas.getContext('2d');
 
     let webpSupported = null;
@@ -128,32 +147,71 @@
       return webpSupported;
     }
 
-    function processFile(file) {
+    let removeBackgroundFn = null;
+    async function loadRembg() {
+      if (removeBackgroundFn) return removeBackgroundFn;
+      const mod = await import('https://unpkg.com/modern-rembg@0.1.2/dist/index.mjs');
+      removeBackgroundFn = mod.removeBackground;
+      return removeBackgroundFn;
+    }
+
+    function drawToCanvas(imageBlob) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(imageBlob);
+        img.onload = () => {
+          canvas.width = 1200;
+          canvas.height = 1200;
+          ctx.clearRect(0, 0, 1200, 1200);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, 1200, 1200);
+
+          const maxDim = 1000;
+          const scale = Math.min(maxDim / img.width, maxDim / img.height);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          const x = (1200 - w) / 2;
+          const y = (1200 - h) / 2;
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(30, 30, 20, 0.22)';
+          ctx.shadowBlur = 46;
+          ctx.shadowOffsetY = 20;
+          ctx.drawImage(img, x, y, w, h);
+          ctx.restore();
+
+          URL.revokeObjectURL(objectUrl);
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Could not read the image.'));
+        };
+        img.src = objectUrl;
+      });
+    }
+
+    let lastFile = null;
+
+    async function processFile(file) {
       if (!file) return;
+      lastFile = file;
+      downloadBtn.disabled = true;
       status.textContent = 'Processing…';
       status.className = 'status';
-      const img = new Image();
-      const objectUrl = URL.createObjectURL(file);
-      img.onload = () => {
-        canvas.width = 1200;
-        canvas.height = 1200;
-        ctx.clearRect(0, 0, 1200, 1200);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, 1200, 1200);
 
-        const maxDim = 1000;
-        const scale = Math.min(maxDim / img.width, maxDim / img.height);
-        const w = img.width * scale;
-        const h = img.height * scale;
-        const x = (1200 - w) / 2;
-        const y = (1200 - h) / 2;
+      try {
+        let sourceBlob = file;
 
-        ctx.save();
-        ctx.shadowColor = 'rgba(30, 30, 20, 0.22)';
-        ctx.shadowBlur = 46;
-        ctx.shadowOffsetY = 20;
-        ctx.drawImage(img, x, y, w, h);
-        ctx.restore();
+        if (rembgCheckbox.checked) {
+          status.textContent = 'Removing background… (downloads a ~4 MB model on first use)';
+          const removeBackground = await loadRembg();
+          const fileUrl = URL.createObjectURL(file);
+          sourceBlob = await removeBackground(fileUrl);
+          URL.revokeObjectURL(fileUrl);
+        }
+
+        await drawToCanvas(sourceBlob);
 
         canvas.style.display = 'block';
         emptyState.style.display = 'none';
@@ -162,18 +220,17 @@
         const supported = checkWebpSupport();
         status.textContent = supported ? 'Ready — download as WebP.' : 'Ready — your browser does not support WebP, download as PNG instead.';
         status.className = 'status ok';
-
-        URL.revokeObjectURL(objectUrl);
-      };
-      img.onerror = () => {
-        status.textContent = 'Could not read the image.';
+      } catch (err) {
+        status.textContent = 'Error: ' + err.message;
         status.className = 'status';
-        URL.revokeObjectURL(objectUrl);
-      };
-      img.src = objectUrl;
+      }
     }
 
     input.addEventListener('change', () => processFile(input.files[0]));
+
+    rembgCheckbox.addEventListener('change', () => {
+      if (lastFile) processFile(lastFile);
+    });
 
     ['dragover', 'dragenter'].forEach((evt) =>
       dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); })
