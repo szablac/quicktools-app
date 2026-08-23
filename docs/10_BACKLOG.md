@@ -29,7 +29,7 @@
 | 3 | PLAT-001 | P1 | `DONE` | Tool-regisztrációs keret: `tools` tábla + `GET /api/tools` végpont (fiók/előfizetés elhalasztva, DR-001) | roadmap Fázis 1 |
 | 4 | TOOL-001 | P2 | `DONE` | Favicon Generator megvalósítva (backend + HU/EN frontend), élesben ellenőrizve (feltöltés → ZIP-letöltés működik) | PLAT-001 (kész) |
 | 5 | OPS-001 | P2 | `TODO` | Statikus tartalom (HTML/JS) cache-frissülési stratégia: az Apache-szintű `max-age=172800` alapértelmezés miatt visszatérő látogatóknál akár 2 napig elmaradhat egy frissülés | – |
-| 6 | PROD-002 | **P0** | `VERIFY` | Kapcsolattartási elérhetőség: saját, DB-be mentő kapcsolatfelvételi űrlap (`POST /api/contact`, honeypot + rate-limit, nincs kimenő email) az adatvédelmi tájékoztatóban (HU+EN), nyilvános email cím nélkül — kód kész, migráció (006) élesben még nem futott, élő teszt hátravan | domain véglegesítés vagy MON-001 jóváhagyás |
+| 6 | PROD-002 | **P0** | `DONE` | Kapcsolattartási elérhetőség: saját, DB-be mentő kapcsolatfelvételi űrlap (`POST /api/contact`, honeypot + rate-limit, nincs kimenő email) az adatvédelmi tájékoztatóban (HU+EN), nyilvános email cím nélkül — élesben ellenőrizve (érvénytelen/érvényes/honeypot eset, HU+EN hibaüzenet, `utf8mb4` kódolás javítva és igazolva) | domain véglegesítés vagy MON-001 jóváhagyás |
 | 7 | TOOL-002 | P2 | `DONE` | JSON Viewer megvalósítva (teljesen kliens-oldali, backend nélkül), élesben ellenőrizve | PLAT-001 (kész) |
 | 8 | TOOL-003 | P2 | `DONE` | Termékfotó Optimalizáló megvalósítva (teljesen kliens-oldali, Canvas API), élesben ellenőrizve | PLAT-001 (kész) |
 
@@ -51,3 +51,12 @@
 - [x] Nyers SQL-/stack-hiba nem szivárog ki a kliens felé hibaválaszban
 
 > Vue frontend alapváz és fiók-keret **nem** része ennek a tételnek — lásd `docs/04_DOMAIN_RULES.md` DR-001 (fiók/előfizetés elhalasztva).
+
+### PROD-002
+
+- [x] `db/migrations/006_create_contact_messages_table.sql` lefuttatva phpMyAdmin-ban
+- [x] `POST /api/contact` élesben: érvénytelen bemenetre 400 + helyes HU/EN hibaüzenet
+- [x] `POST /api/contact` élesben: érvényes bemenetre `{"ok":true}` és sor kerül a `contact_messages` táblába
+- [x] Honeypot mező kitöltésekor `{"ok":true}`, de **nincs** DB-beszúrás
+- [x] Ékezetes (magyar) szöveg torzulás nélkül kerül be a táblába (`utf8mb4` javítás után igazolva)
+- [x] `adatvedelem.html` és `en/privacy.html` már nem hivatkozik „projekt véglegesítésével kerül ide” placeholderre, helyette a kapcsolatfelvételi űrlapra mutat
