@@ -11,6 +11,14 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '10kb' }));
 
+// Az Apache/Passenger réteg minden választ megtold egy saját Cache-Control/Expires
+// fejléccel (MIME-típus szerinti alapértelmezés, nem-HTML válaszra jellemzően 2 nap) —
+// ez a dinamikus API-válaszokra nem kívánatos, ezért itt egységesen felülírjuk (OPS-001).
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -26,7 +34,6 @@ app.get('/api/tools', async (req, res) => {
     const [rows] = await pool.query(
       'SELECT slug, name_hu, name_en, description_hu, description_en, category FROM tools WHERE is_active = 1 ORDER BY name_hu'
     );
-    res.set('Cache-Control', 'no-store');
     res.json(rows);
   } catch (err) {
     console.error(err);
