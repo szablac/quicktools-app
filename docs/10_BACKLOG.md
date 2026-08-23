@@ -32,8 +32,8 @@
 | 6 | PROD-002 | **P0** | `DONE` | Kapcsolattartási elérhetőség: saját, DB-be mentő kapcsolatfelvételi űrlap (`POST /api/contact`, honeypot + rate-limit, nincs kimenő email) az adatvédelmi tájékoztatóban (HU+EN), nyilvános email cím nélkül — élesben ellenőrizve (érvénytelen/érvényes/honeypot eset, HU+EN hibaüzenet, `utf8mb4` kódolás javítva és igazolva) | domain véglegesítés vagy MON-001 jóváhagyás |
 | 7 | TOOL-002 | P2 | `DONE` | JSON Viewer megvalósítva (teljesen kliens-oldali, backend nélkül), élesben ellenőrizve | PLAT-001 (kész) |
 | 8 | TOOL-003 | P2 | `DONE` | Termékfotó Optimalizáló megvalósítva (teljesen kliens-oldali, Canvas API), élesben ellenőrizve | PLAT-001 (kész) |
-| 9 | TOOL-004 | P2 | `VERIFY` | PDF Oldal Kiválasztó megvalósítva (teljesen kliens-oldali, `pdf-lib` + `pdfjs-dist` CDN-ről, megtartás/eltávolítás mód). A felhasználó saját böngészőjében (helyi szerveren át) igazolta: bélyegképek megjelennek, kattinthatók, letöltés működik. Élesítés (migráció 007 + deploy) még hátravan. | PLAT-001 (kész) |
-| 10 | UX-001 | P2 | `DONE` | Feltöltő doboz (dropzone) egységes, beszédesebb megjelenítése mindhárom fájlfeltöltős toolban (Favicon Generator, Termékfotó Optimalizáló, PDF Oldal Kiválasztó): ikon + kiemelt "Fájl kiválasztása" gomb-szerű elem. Menet közben egy valódi CSS-hibát is feltárt és javított (ld. ADR-012). | TOOL-001, TOOL-003 (kész), TOOL-004 |
+| 9 | TOOL-004 | P2 | `DONE` | PDF Oldal Kiválasztó megvalósítva (teljesen kliens-oldali, `pdf-lib` + `pdfjs-dist` CDN-ről, megtartás/eltávolítás mód), élesben ellenőrizve (`/api/tools` listázza, HU+EN oldal 200-at ad) | PLAT-001 (kész) |
+| 10 | UX-001 | P2 | `DONE` | Feltöltő doboz (dropzone) egységes, beszédesebb megjelenítése mindhárom fájlfeltöltős toolban (Favicon Generator, Termékfotó Optimalizáló, PDF Oldal Kiválasztó): ikon + kiemelt "Fájl kiválasztása" gomb-szerű elem. Menet közben egy valódi CSS-hibát is feltárt és javított (ld. ADR-012), élesben igazolva. | TOOL-001, TOOL-003 (kész), TOOL-004 |
 
 ## Kiemelt feladatok elfogadási feltételei
 
@@ -68,3 +68,15 @@
 - [x] `GET /api/tools` élesben `Cache-Control: no-store`-t küld
 - [x] `POST /api/contact` élesben `Cache-Control: no-store`-t küld (korábban semmilyen cache-fejléce nem volt)
 - [x] Statikus HTML-oldalak fejléce nem változott (`max-age=0`, nincs regresszió)
+
+### TOOL-004
+
+- [x] `db/migrations/007_seed_pdf_page_selector.sql` lefuttatva phpMyAdmin-ban
+- [x] `GET /api/tools` élesben tartalmazza a `pdf-page-selector` slugot
+- [x] `pdf-page-selector.html` és `en/pdf-page-selector.html` élesben 200-at ad
+- [x] Bélyegkép-előnézet, kattintható kijelölés, megtartás/eltávolítás mód és letöltés a felhasználó saját böngészőjében igazolva
+
+### UX-001
+
+- [x] Mindhárom fájlfeltöltős tool (Favicon Generator, Termékfotó Optimalizáló, PDF Oldal Kiválasztó) dropzone-ja ikont + "Fájl kiválasztása" gombot kapott, HU+EN
+- [x] A `<label>` inline/blokk CSS-hiba (ADR-012) javítva, élesben igazolva (`display: block` jelen van)
