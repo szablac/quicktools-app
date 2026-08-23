@@ -38,7 +38,7 @@
 | 12 | TOOL-006 | P2 | `DONE` | CSS Gradient Builder megvalósítva (teljesen kliens-oldali, lineáris/sugárirányú, tetszőleges számú színmegálló, CSS + Tailwind arbitrary-value export), élesben ellenőrizve (`/api/tools` listázza, HU+EN oldal 200-at ad) | PLAT-001 (kész) |
 | 13 | UX-002 | P2 | `DONE` | Főoldal tool-kártyák: minden kártya a saját tool egyedi hero-ikonját mutatja a generikus placeholder helyett (`TOOL_ICONS` slug→SVG leképezés, ismeretlen slugra a régi generikus ikonra esik vissza), élesben ellenőrizve | TOOL-001..006 |
 | 14 | I18N-001 | P2 | `DONE` | Nyelvi útvonalválasztás IP-alapú országfelismeréssel (`geoip-lite`, ADR-014): magyar IP → magyar kezdőoldal, külföldi → `/en/`, `qt_lang` süti emlékszik a választásra. Csak a gyökér (`/`) útvonalra vonatkozik. Adatvédelmi/cookie szabályzat frissítve. Élesben `curl`-lal igazolva mind a 3 fő eset (külföldi/magyar/már döntött) | – |
-| 15 | SEO-001 | P2 | `VERIFY` | SEO-alapok pótolva (ADR-015): `robots.txt`, dinamikusan generált `sitemap.xml` (a `tools` táblából), `rel="canonical"` + `hreflang` (hu/en/x-default) mind a 9 HU/EN oldalpáron (18 fájl). Schema.org strukturált adat tudatosan kimaradt (nice-to-have). Node.js-ben és `grep`-pel igazolva; élesítés hátravan. | – |
+| 15 | SEO-001 | P2 | `DONE` | SEO-alapok pótolva (ADR-015): `robots.txt`, dinamikusan generált `sitemap.xml` (a `tools` táblából), `rel="canonical"` + `hreflang` (hu/en/x-default) mind a 9 HU/EN oldalpáron (18 fájl). Schema.org strukturált adat tudatosan kimaradt (nice-to-have). Élesben igazolva. | – |
 
 ## Kiemelt feladatok elfogadási feltételei
 
@@ -118,4 +118,4 @@
 - [x] `robots.txt` elérhető, mindent enged, hivatkozik a sitemapra
 - [x] `GET /sitemap.xml` dinamikusan generál 18 URL-bejegyzést (9 oldalpár × 2 nyelv), helyes hreflang-párosítással — Node.js-ben önállóan igazolva
 - [x] Mind a 18 HTML-fájl tartalmazza a `rel="canonical"` és a 3 `hreflang` (hu/en/x-default) címkét — `grep`-pel igazolva
-- [ ] Élesben ellenőrizendő: `/robots.txt`, `/sitemap.xml` 200-at ad, a sitemap tartalma helyes
+- [x] Élesben ellenőrizve: `/robots.txt`, `/sitemap.xml` 200-at ad, a sitemap tartalma helyes (18 URL, korrekt hreflang-párosítás)

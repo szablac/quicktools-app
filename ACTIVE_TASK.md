@@ -6,21 +6,19 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz + TOOL-001..006 KÉSZ; PROD-002, OPS-001, UX-001, UX-002, I18N-001 KÉSZ; SEO-001 kódja kész, deploy hátravan |
-| Aktív feladat | SEO-001 — commit/push/deploy jóváhagyásra vár |
-| Állapot | `robots.txt` + dinamikus `GET /sitemap.xml` (a `tools` táblából, sosem lesz elavult) + `canonical`/`hreflang` címkék mind a 9 HU/EN oldalpáron (18 fájl). SSH-vizsgálat is lezárva (ADR-006 frissítve: shell letiltva, végleg megerősítve). | 
-| Kiemelt következő feladat | Commit + push jóváhagyása, cPanel Pull+Restart (migráció nem kell), élő ellenőrzés (`/robots.txt`, `/sitemap.xml`) |
-| Aktuális kódmódosítás | `server.js` (sitemap route), `public/robots.txt` (új), 18 HTML-fájl (canonical+hreflang), `docs/09_DECISIONS.md` (ADR-006 kiegészítve, ADR-015 új), `docs/10_BACKLOG.md`, `ACTIVE_TASK.md` — helyben, még nincs commitolva |
+| Fázis | 1 – Platform-váz + TOOL-001..006 KÉSZ; PROD-002, OPS-001, UX-001, UX-002, I18N-001, SEO-001 KÉSZ |
+| Aktív feladat | – (nincs kijelölt aktív tétel) |
+| Állapot | `robots.txt` és dinamikus `sitemap.xml` élesben igazolva (18 URL, helyes hreflang-párosítás); `canonical`/`hreflang` címkék mind a 9 HU/EN oldalpáron élnek |
+| Kiemelt következő feladat | Döntés kell: következő tool, vagy MON-001/002 (AdSense) folytatása |
+| Aktuális kódmódosítás | – (minden pusholva és deployolva: `4701cb9`) |
 | Blokkoló | – (Google AdSense felülvizsgálat, MON-001, a háttérben fut, nem blokkol) |
 | Utolsó tartós döntés | ADR-015 (2026-08-23, `ELFOGADOTT`) — dinamikus sitemap + canonical/hreflang minden oldalpáron |
 
 ## Következő pontos lépések
 
-1. Commit + push jóváhagyása.
-2. cPanel Git Version Control „Pull” + Setup Node.js App „Restart” (nincs migráció, `package.json` sem változott).
-3. Élő ellenőrzés: `curl` a `/robots.txt`-re és `/sitemap.xml`-re (200, helyes tartalom, 18 URL).
-4. Ezután SEO-001 lezárható `DONE`-ra; utána újra döntés kell: következő tool, vagy MON-001/002 (AdSense) folytatása.
-5. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
+1. Döntés kell a felhasználótól: következő tool, vagy MON-001/MON-002 (AdSense-folytatás).
+2. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001).
+3. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
 
 > Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
@@ -28,19 +26,16 @@
 
 ## Legutóbbi interakciók
 
-- **SSH-vizsgálat lezárva**: a felhasználó megadott egy cPanel-generált SSH-kulcsot és jelszót. Egyetlen óvatos kapcsolódási teszttel (Imunify360/IP-tiltás elkerülése miatt) megerősítettük: a hitelesítés sikeres, de a szerver válasza szerint a shell-hozzáférés le van tiltva a fiókon. ADR-006 frissítve ezzel a végleges eredménnyel.
-- **SEO-001 implementáció**: a felhasználó kérésére (jó Google-helyezést szeretne) pótoltuk a korábban azonosított hiányzó SEO-alapokat: `public/robots.txt`, dinamikus `GET /sitemap.xml` a `tools` táblából (nem statikus fájl, hogy sose maradjon el a valóságtól), valamint `rel="canonical"` + `hreflang` (hu/en/x-default) címkék mind a 9 HU/EN oldalpáron (index, 6 tool, adatvedelem/privacy, sutik/cookies — 18 fájl). Schema.org strukturált adat tudatosan kimaradt ebből a körből (nice-to-have).
-- **Ellenőrzés**: a sitemap XML-generáló logikát Node.js-ben önállóan futtatva igazoltuk (18 helyes `<url>` bejegyzés, korrekt hreflang-párosítás az eltérő fájlnevű oldalpároknál — pl. `adatvedelem.html`↔`en/privacy.html` — is), `node --check` hibátlan, `grep`-pel igazolva mind a 18 fájlban a `canonical` címke jelenléte.
+- **SSH-vizsgálat lezárva**: a cPanel-generált SSH-kulcs hitelesítése sikeres, de a szerver megerősítette, hogy a shell-hozzáférés le van tiltva a fiókon. ADR-006 véglegesítve.
+- **SEO-001 implementáció**: `robots.txt`, dinamikus `GET /sitemap.xml` (a `tools` táblából), `canonical`+`hreflang` címkék mind a 9 HU/EN oldalpáron (18 fájl). Node.js-ben és `grep`-pel előzetesen igazolva (ADR-015).
+- **Élő igazolás + lezárás**: commit `4701cb9`, push, cPanel Pull+Restart (migráció nem kellett). `curl`-lal igazolva: `/robots.txt` és `/sitemap.xml` 200-at ad, a sitemap 18 helyes URL-t tartalmaz (beleértve az eltérő fájlnevű `adatvedelem.html`↔`en/privacy.html` párost is), a `canonical` címke jelen van egy mintaoldalon. SEO-001 lezárva `DONE`-ra.
 
 ## Aktuális munkafájlok
 
-- `server.js` – `GET /sitemap.xml` dinamikus route
-- `public/robots.txt` – új fájl
-- 18 HTML-fájl (`index`, 6 tool, `adatvedelem`/`privacy`, `sutik`/`cookies`, HU+EN) – `canonical`+`hreflang` címkék
+– (minden pusholva, deployolva és élesben igazolva)
 
 ## Ellenőrzési állapot
 
-- `node --check server.js`: szintaktikailag hibátlan.
-- A sitemap XML-generálás Node.js-ben önállóan futtatva igazolva: 18 `<url>` bejegyzés, helyes hreflang-párosítás.
-- Mind a 18 HTML-fájlban `grep`-pel igazolva a `canonical` címke jelenléte.
-- **Még nincs ellenőrizve**: élő (quicktools.qwer.hu) viselkedés — deploy szükséges hozzá.
+- `https://quicktools.qwer.hu/robots.txt` és `.../sitemap.xml` 200-at ad, curl-lal igazolva.
+- A sitemap 18 `<loc>` bejegyzést tartalmaz, ellenőrizve a helyes tartalommal.
+- A `canonical` címke élesben igazolva egy mintaoldalon (`css-gradient-builder.html`).
