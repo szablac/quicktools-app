@@ -68,3 +68,10 @@
 - Dátum: 2026-08-22
 - Döntés: a fejlesztési időszak alatt Google AdSense hirdetések kerülnek az oldalra, meglévő Google-fiókkal. A végleges monetizációs modellről (a `micro app ötletek.docx`-ban javasoltakhoz — freemium/előfizetés/kredit stb. — képest) később döntünk.
 - Indok: a felhasználó döntése; egyszerű, gyorsan bevezethető átmeneti bevételi forrás, amíg a platform-váz és az első eszközök épülnek. Előfeltétele volt egy valódi tartalmú landing oldal és adatvédelmi tájékoztató (elkészült 2026-08-22, lásd `VALTOZASOK.md`).
+
+### ADR-008 – Vizuális design irány: „Soft Calm"
+
+- Állapot: **ELFOGADOTT**
+- Dátum: 2026-08-23
+- Döntés: a Claude Design canvasban bemutatott 3+4 irány közül (techno vonal elvetve) a **„Soft Calm"** irány lett kiválasztva: puha lekerekített kártyák (24px), meleg törtfehér háttér (`#f9f8f5`), zsályazöld akcentus (`#5b7f6f`), Plus Jakarta Sans betűtípus. A főoldal kártyás eszköz-elrendezést kap, az egyes tool-aloldalak részletesebben mutatják be az adott eszközt (lépések, csomag-tartalom).
+- Indok: a felhasználó választása — barátságos, széles közönségnek (kisvállalkozók, fejlesztők, kreatívok) is befogadható megjelenés. **Tudatosan ideiglenes/iterálható**: a felhasználó jelezte, hogy a design később, több eszköz megléte után újragondolásra kerül — ez nem végleges márka-döntés.
