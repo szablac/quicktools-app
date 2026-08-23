@@ -166,6 +166,61 @@
       return removeBackgroundFn;
     }
 
+    // A modern-rembg a KÉPET is 320×320-ra kicsinyíti a szegmentáláshoz, majd visszanyújtja —
+    // ez tönkreteszi a részletgazdagságot. Ezért csak az átlátszósági maszkot vesszük át tőle,
+    // a tényleges képpontokat az eredeti, teljes felbontású fájlból állítjuk össze.
+    function applyAlphaMask(originalFile, maskBlob) {
+      return new Promise((resolve, reject) => {
+        const origImg = new Image();
+        const maskImg = new Image();
+        const origUrl = URL.createObjectURL(originalFile);
+        const maskUrl = URL.createObjectURL(maskBlob);
+        let loaded = 0;
+        function done() {
+          loaded++;
+          if (loaded < 2) return;
+          try {
+            const w = origImg.naturalWidth;
+            const h = origImg.naturalHeight;
+
+            const workCanvas = document.createElement('canvas');
+            workCanvas.width = w;
+            workCanvas.height = h;
+            const wctx = workCanvas.getContext('2d');
+            wctx.drawImage(origImg, 0, 0, w, h);
+            const origData = wctx.getImageData(0, 0, w, h);
+
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = w;
+            maskCanvas.height = h;
+            const mctx = maskCanvas.getContext('2d');
+            mctx.drawImage(maskImg, 0, 0, w, h);
+            const maskData = mctx.getImageData(0, 0, w, h);
+
+            for (let i = 0; i < origData.data.length; i += 4) {
+              origData.data[i + 3] = maskData.data[i + 3];
+            }
+            wctx.putImageData(origData, 0, 0);
+            workCanvas.toBlob((blob) => {
+              URL.revokeObjectURL(origUrl);
+              URL.revokeObjectURL(maskUrl);
+              resolve(blob);
+            }, 'image/png');
+          } catch (e) {
+            URL.revokeObjectURL(origUrl);
+            URL.revokeObjectURL(maskUrl);
+            reject(e);
+          }
+        }
+        origImg.onload = done;
+        maskImg.onload = done;
+        origImg.onerror = () => reject(new Error('Nem sikerült beolvasni az eredeti képet.'));
+        maskImg.onerror = () => reject(new Error('Nem sikerült feldolgozni a maszkot.'));
+        origImg.src = origUrl;
+        maskImg.src = maskUrl;
+      });
+    }
+
     function drawToCanvas(imageBlob) {
       return new Promise((resolve, reject) => {
         const img = new Image();
@@ -220,8 +275,10 @@
           status.textContent = 'Háttér eltávolítása… (első használatkor letölt egy kb. 4 MB-os modellt)';
           const removeBackground = await loadRembg();
           const fileUrl = URL.createObjectURL(file);
-          sourceBlob = await removeBackground(fileUrl);
+          const maskBlob = await removeBackground(fileUrl);
           URL.revokeObjectURL(fileUrl);
+          status.textContent = 'Eredeti felbontás visszaállítása…';
+          sourceBlob = await applyAlphaMask(file, maskBlob);
         }
 
         await drawToCanvas(sourceBlob);

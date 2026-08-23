@@ -166,6 +166,61 @@
       return removeBackgroundFn;
     }
 
+    // modern-rembg also downsamples the IMAGE itself to 320×320 for segmentation and
+    // stretches it back up — this destroys detail. So we only take the alpha mask from it,
+    // and composite actual pixels from the original, full-resolution file ourselves.
+    function applyAlphaMask(originalFile, maskBlob) {
+      return new Promise((resolve, reject) => {
+        const origImg = new Image();
+        const maskImg = new Image();
+        const origUrl = URL.createObjectURL(originalFile);
+        const maskUrl = URL.createObjectURL(maskBlob);
+        let loaded = 0;
+        function done() {
+          loaded++;
+          if (loaded < 2) return;
+          try {
+            const w = origImg.naturalWidth;
+            const h = origImg.naturalHeight;
+
+            const workCanvas = document.createElement('canvas');
+            workCanvas.width = w;
+            workCanvas.height = h;
+            const wctx = workCanvas.getContext('2d');
+            wctx.drawImage(origImg, 0, 0, w, h);
+            const origData = wctx.getImageData(0, 0, w, h);
+
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = w;
+            maskCanvas.height = h;
+            const mctx = maskCanvas.getContext('2d');
+            mctx.drawImage(maskImg, 0, 0, w, h);
+            const maskData = mctx.getImageData(0, 0, w, h);
+
+            for (let i = 0; i < origData.data.length; i += 4) {
+              origData.data[i + 3] = maskData.data[i + 3];
+            }
+            wctx.putImageData(origData, 0, 0);
+            workCanvas.toBlob((blob) => {
+              URL.revokeObjectURL(origUrl);
+              URL.revokeObjectURL(maskUrl);
+              resolve(blob);
+            }, 'image/png');
+          } catch (e) {
+            URL.revokeObjectURL(origUrl);
+            URL.revokeObjectURL(maskUrl);
+            reject(e);
+          }
+        }
+        origImg.onload = done;
+        maskImg.onload = done;
+        origImg.onerror = () => reject(new Error('Could not read the original image.'));
+        maskImg.onerror = () => reject(new Error('Could not process the mask.'));
+        origImg.src = origUrl;
+        maskImg.src = maskUrl;
+      });
+    }
+
     function drawToCanvas(imageBlob) {
       return new Promise((resolve, reject) => {
         const img = new Image();
@@ -220,8 +275,10 @@
           status.textContent = 'Removing background… (downloads a ~4 MB model on first use)';
           const removeBackground = await loadRembg();
           const fileUrl = URL.createObjectURL(file);
-          sourceBlob = await removeBackground(fileUrl);
+          const maskBlob = await removeBackground(fileUrl);
           URL.revokeObjectURL(fileUrl);
+          status.textContent = 'Restoring original resolution…';
+          sourceBlob = await applyAlphaMask(file, maskBlob);
         }
 
         await drawToCanvas(sourceBlob);
