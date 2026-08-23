@@ -70,13 +70,26 @@
     const ICON = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
     const PLUS = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a3a099" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg>';
 
+    // Same icon per tool as its own page's hero uses.
+    const TOOL_ICONS = {
+      'favicon-generator': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+      'json-viewer': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><path d="M8 3H6a2 2 0 00-2 2v3a2 2 0 01-2 2 2 2 0 012 2v3a2 2 0 002 2h2M16 3h2a2 2 0 012 2v3a2 2 0 002 2 2 2 0 00-2 2v3a2 2 0 01-2 2h-2"/></svg>',
+      'product-photo-optimizer': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+      'pdf-page-selector': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><path d="M8 3H6a2 2 0 00-2 2v14a2 2 0 002 2h9a2 2 0 002-2v-9l-6-7z"/><path d="M14 3v6h6"/><path d="m9 15 2 2 4-4"/></svg>',
+      'color-contrast-checker': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="#5b7f6f" stroke="none"/></svg>',
+      'css-gradient-builder': '<svg width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="gradCardIcon" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5b7f6f"/><stop offset="100%" stop-color="#a9c2b6"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="5" fill="url(#gradCardIcon)"/></svg>',
+    };
+    function iconFor(slug) {
+      return TOOL_ICONS[slug] || ICON;
+    }
+
     fetch('/api/tools')
       .then((r) => r.json())
       .then((tools) => {
         const grid = document.getElementById('tools-grid');
         const cards = tools.map((t) => `
           <a class="card live" href="/en/${t.slug}.html" style="cursor:pointer;">
-            <div class="icon">${ICON}</div>
+            <div class="icon">${iconFor(t.slug)}</div>
             <div class="card-title">${t.name_en}</div>
             <div class="card-desc">${t.description_en || ''}</div>
             <div class="card-cta">Open &rarr;</div>
