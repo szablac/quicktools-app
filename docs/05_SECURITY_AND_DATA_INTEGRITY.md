@@ -24,7 +24,7 @@
 
 ## Bemenet-validáció
 
-- [ ] [KITÖLTENDŐ]
+- [x] `POST /api/contact` (PROD-002): email-formátum, üzenet minimum/maximum hossz, honeypot mező (bot-szűrés) és IP-alapú rate-limit (max 5 kérés/óra) szerveroldalon ellenőrizve.
 
 ## Ismert, tudatosan vállalt kockázat
 

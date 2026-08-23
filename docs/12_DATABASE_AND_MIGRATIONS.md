@@ -5,6 +5,7 @@
 ## Jelenlegi séma / adatmodell
 
 - `tools` tábla (PLAT-001 óta): `id, slug (UNIQUE), name_hu, name_en, description_hu, description_en, category, is_active, created_at`. Lásd `db/migrations/001_create_tools_table.sql`.
+- `contact_messages` tábla (PROD-002 óta): `id, name (NULL), email, message, is_read, created_at`. A `POST /api/contact` végpont írja, kézi ellenőrzés phpMyAdminban, nincs kimenő email-értesítés. Lásd `db/migrations/006_create_contact_messages_table.sql`.
 
 ## Migrációs konvenció
 

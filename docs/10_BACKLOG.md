@@ -29,7 +29,7 @@
 | 3 | PLAT-001 | P1 | `DONE` | Tool-regisztrációs keret: `tools` tábla + `GET /api/tools` végpont (fiók/előfizetés elhalasztva, DR-001) | roadmap Fázis 1 |
 | 4 | TOOL-001 | P2 | `DONE` | Favicon Generator megvalósítva (backend + HU/EN frontend), élesben ellenőrizve (feltöltés → ZIP-letöltés működik) | PLAT-001 (kész) |
 | 5 | OPS-001 | P2 | `TODO` | Statikus tartalom (HTML/JS) cache-frissülési stratégia: az Apache-szintű `max-age=172800` alapértelmezés miatt visszatérő látogatóknál akár 2 napig elmaradhat egy frissülés | – |
-| 6 | PROD-002 | **P0** | `TODO` | Kapcsolattartási elérhetőség visszapótlása az adatvédelmi tájékoztatóba (ADR-009 szerint jelenleg eltávolítva) — a domain véglegesítése VAGY az AdSense éles indulása előtt kötelező | domain véglegesítés vagy MON-001 jóváhagyás |
+| 6 | PROD-002 | **P0** | `VERIFY` | Kapcsolattartási elérhetőség: saját, DB-be mentő kapcsolatfelvételi űrlap (`POST /api/contact`, honeypot + rate-limit, nincs kimenő email) az adatvédelmi tájékoztatóban (HU+EN), nyilvános email cím nélkül — kód kész, migráció (006) élesben még nem futott, élő teszt hátravan | domain véglegesítés vagy MON-001 jóváhagyás |
 | 7 | TOOL-002 | P2 | `DONE` | JSON Viewer megvalósítva (teljesen kliens-oldali, backend nélkül), élesben ellenőrizve | PLAT-001 (kész) |
 | 8 | TOOL-003 | P2 | `DONE` | Termékfotó Optimalizáló megvalósítva (teljesen kliens-oldali, Canvas API), élesben ellenőrizve | PLAT-001 (kész) |
 

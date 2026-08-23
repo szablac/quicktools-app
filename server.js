@@ -9,6 +9,7 @@ const { ZipArchive } = require('archiver');
 const app = express();
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json({ limit: '10kb' }));
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -29,6 +30,76 @@ app.get('/api/tools', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Hiba történt az eszközlista lekérésekor.' });
+  }
+});
+
+const CONTACT_RATE_LIMIT = { windowMs: 60 * 60 * 1000, max: 5 };
+const contactRateLimitHits = new Map();
+
+function isContactRateLimited(ip) {
+  const now = Date.now();
+  const recent = (contactRateLimitHits.get(ip) || []).filter(
+    (t) => now - t < CONTACT_RATE_LIMIT.windowMs
+  );
+  recent.push(now);
+  contactRateLimitHits.set(ip, recent);
+  return recent.length > CONTACT_RATE_LIMIT.max;
+}
+
+const CONTACT_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const CONTACT_MESSAGES = {
+  hu: {
+    invalid: 'Kérjük, adj meg egy érvényes email címet és egy legalább 5 karakteres üzenetet.',
+    tooLong: 'A megadott szöveg túl hosszú.',
+    rateLimited: 'Túl sok kérés érkezett erről a címről, kérjük próbáld újra később.',
+    error: 'Hiba történt az üzenet elküldésekor. Kérjük, próbáld újra később.',
+  },
+  en: {
+    invalid: 'Please provide a valid email address and a message of at least 5 characters.',
+    tooLong: 'The submitted text is too long.',
+    rateLimited: 'Too many requests from this address, please try again later.',
+    error: 'Something went wrong while sending your message. Please try again later.',
+  },
+};
+
+app.post('/api/contact', async (req, res) => {
+  const lang = req.body && req.body.lang === 'en' ? 'en' : 'hu';
+  const t = CONTACT_MESSAGES[lang];
+  const { name, email, message, website } = req.body || {};
+
+  if (website) {
+    // honeypot mező: csak botok töltik ki, valós felhasználó nem látja — csendben nyugtázzuk
+    return res.json({ ok: true });
+  }
+
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress;
+  if (isContactRateLimited(ip)) {
+    return res.status(429).json({ error: t.rateLimited });
+  }
+
+  if (
+    typeof email !== 'string' ||
+    !CONTACT_EMAIL_RE.test(email) ||
+    typeof message !== 'string' ||
+    message.trim().length < 5
+  ) {
+    return res.status(400).json({ error: t.invalid });
+  }
+  if (email.length > 255 || message.length > 4000 || (name && String(name).length > 120)) {
+    return res.status(400).json({ error: t.tooLong });
+  }
+
+  try {
+    await pool.query('INSERT INTO contact_messages (name, email, message) VALUES (?, ?, ?)', [
+      name ? String(name).trim().slice(0, 120) : null,
+      email.trim(),
+      message.trim(),
+    ]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: t.error });
   }
 });
 

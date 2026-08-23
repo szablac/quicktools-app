@@ -12,6 +12,17 @@
   footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #ece9e2; font-size: 0.85rem; color: #6b6f6a; }
   a { color: #5b7f6f; }
   a:hover { color: #46655a; }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .field input, .field textarea { width: 100%; box-sizing: border-box; font-family: inherit; font-size: 0.95rem; padding: 0.55rem 0.7rem; border: 1px solid #ece9e2; border-radius: 8px; background: #fff; color: #2b2e2c; }
+  .field input:focus, .field textarea:focus { outline: 2px solid #5b7f6f; outline-offset: 1px; }
+  .hp-field { position: absolute; left: -9999px; top: -9999px; }
+  button[type="submit"] { background: #5b7f6f; color: #fff; border: none; border-radius: 8px; padding: 0.6rem 1.3rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+  button[type="submit"]:hover { background: #46655a; }
+  button[type="submit"]:disabled { opacity: 0.6; cursor: default; }
+  #contact-status { margin-top: 0.75rem; font-size: 0.9rem; }
+  #contact-status.success { color: #3f6a52; }
+  #contact-status.error { color: #a24444; }
 </style>
 </head>
 <body>
@@ -19,7 +30,7 @@
   <p><em>Last updated: 2026-08-23</em></p>
 
   <h2>Data controller</h2>
-  <p>QuickTools.hu is currently operated by a private individual (a project under active development, not yet a registered business, no final domain name). Precise contact details will be added once the project is finalized.</p>
+  <p>QuickTools.hu is currently operated by a private individual (a project under active development, not yet a registered business, no final domain name). You can reach the data controller via the <a href="#contact">contact form</a> at the bottom of this page.</p>
 
   <h2>What data we process</h2>
   <p>The site currently does not offer registration and does not directly collect personal data from visitors. As the service grows (e.g. user accounts, individual tools), this policy will be updated with the specific data categories and legal bases involved.</p>
@@ -28,11 +39,79 @@
   <p>We plan to use Google AdSense on this site, which uses cookies. See our separate <a href="/en/cookies.html">Cookie Policy</a> for details.</p>
 
   <h2>Your rights</h2>
-  <p>Should we process personal data in the future, you will have the right to request access, correction, deletion, or to object to processing. Contact details will be added here once the project is finalized.</p>
+  <p>Should we process personal data in the future, you will have the right to request access, correction, deletion, or to object to processing. You can do so via the <a href="#contact">contact form</a> below.</p>
 
   <h2>Changes</h2>
   <p>This policy will evolve alongside the service. Material changes will be announced on the website.</p>
 
+  <h2 id="contact">Contact</h2>
+  <p>Have a question, or want to exercise your data subject rights (access, correction, deletion, objection)? Use the form below.</p>
+  <form id="contact-form" novalidate>
+    <div class="field">
+      <label for="contact-name">Name (optional)</label>
+      <input type="text" id="contact-name" name="name" maxlength="120" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="contact-email">Email address</label>
+      <input type="email" id="contact-email" name="email" required maxlength="255" autocomplete="email">
+    </div>
+    <div class="field">
+      <label for="contact-message">Message</label>
+      <textarea id="contact-message" name="message" required minlength="5" maxlength="4000" rows="5"></textarea>
+    </div>
+    <div class="hp-field" aria-hidden="true">
+      <label for="contact-website">Website</label>
+      <input type="text" id="contact-website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+    <button type="submit">Send</button>
+    <p id="contact-status" role="status"></p>
+  </form>
+
   <p><a href="/en/">&larr; Back to home</a> &middot; <a href="/en/cookies.html">Cookie Policy</a></p>
+
+  <script>
+    var contactForm = document.getElementById('contact-form');
+    var contactStatus = document.getElementById('contact-status');
+    contactForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var submitBtn = contactForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      contactStatus.textContent = '';
+      contactStatus.className = '';
+      fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: contactForm.name.value,
+          email: contactForm.email.value,
+          message: contactForm.message.value,
+          website: contactForm.website.value,
+          lang: 'en',
+        }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok && result.data.ok) {
+            contactStatus.textContent = 'Thank you, your message has been received!';
+            contactStatus.className = 'success';
+            contactForm.reset();
+          } else {
+            contactStatus.textContent = (result.data && result.data.error) || 'Something went wrong while sending your message.';
+            contactStatus.className = 'error';
+          }
+        })
+        .catch(function () {
+          contactStatus.textContent = 'Something went wrong while sending your message. Please try again later.';
+          contactStatus.className = 'error';
+        })
+        .finally(function () {
+          submitBtn.disabled = false;
+        });
+    });
+  </script>
 </body>
 </html>

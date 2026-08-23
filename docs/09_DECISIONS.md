@@ -83,6 +83,7 @@
 - Döntés: a `szablac@gmail.com` email cím és a „© 2026 QuickTools.hu" copyright-sor eltávolítva minden oldalról, **beleértve** az adatvédelmi tájékoztató szövegét is (adatkezelői elérhetőség, érintetti jogok szakasz).
 - Indok: a felhasználó döntése — (1) elkerülni a bot-scraping miatti spam-forgalmat, (2) a domainnév (`quicktools.qwer.hu`) nem végleges, ezért korai lenne rá copyright-márkanevet kötni.
 - **Kockázat, amit tudatosan vállal a felhasználó**: az adatvédelmi tájékoztatóban jelenleg nincs semmilyen látható kapcsolattartási elérhetőség az adatkezelőhöz — ez a GDPR szerint általában elvárt lenne, amint tényleges személyes adatkezelés (pl. AdSense-sütik) élesedik. **Felülvizsgálandó**, mielőtt az AdSense (MON-001) ténylegesen élesedik, vagy a domain véglegesül.
+- **Frissítés (2026-08-23, PROD-002)**: a kockázat lezárva — nyilvános email cím helyett saját, DB-be mentő kapcsolatfelvételi űrlap került az adatvédelmi tájékoztatóba (HU+EN), `POST /api/contact` végponttal, honeypot mezővel és alap IP-alapú rate-limittel a spam ellen. Nincs kimenő email-küldés/értesítés, a beérkező üzeneteket kézzel, phpMyAdminban kell ellenőrizni (`contact_messages` tábla). Ezzel az eredeti (1) indok (bot-scraping elkerülése) is jobban teljesül, mint egy kiírt email címmel.
 
 ### ADR-010 – AI háttéreltávolítás: engedékeny licencű lánc, kliens-oldalon
 
