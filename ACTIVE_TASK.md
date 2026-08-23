@@ -6,38 +6,33 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz + TOOL-001/002/003/004/005 KÉSZ; PROD-002, OPS-001, UX-001 KÉSZ; TOOL-006 (CSS Gradient Builder) kódja kész, deploy hátravan |
-| Aktív feladat | TOOL-006 — commit/push/migráció/deploy jóváhagyásra vár |
-| Állapot | CSS Gradient Builder elkészült. Egy valódi UX-hibát is javítottunk: a színválasztó natív felugró ablaka bezáródott húzás közben, mert a kód minden apró változásnál újraépítette a teljes szín-lista DOM-ját — ezt szétválasztottuk (`renderStopsList()` csak szerkezetváltáskor, `updateOutputs()` mindig), a `samePickerNodeAcrossDrag: true` teszttel igazolva. |
-| Kiemelt következő feladat | Commit + push jóváhagyása, migráció (009) lefuttatása phpMyAdminban, cPanel Pull+Restart, élő ellenőrzés |
-| Aktuális kódmódosítás | `public/css-gradient-builder.html`, `public/en/css-gradient-builder.html`, `db/migrations/009_seed_css_gradient_builder.sql` — helyben, még nincs commitolva |
+| Fázis | 1 – Platform-váz + TOOL-001/002/003/004/005/006 KÉSZ; PROD-002, OPS-001, UX-001 KÉSZ |
+| Aktív feladat | – (nincs kijelölt aktív tétel) |
+| Állapot | CSS Gradient Builder (6. tool) élesben ellenőrizve — `/api/tools` listázza, HU+EN oldal 200-at ad. Egy UX-hibát is javítottunk: a színválasztó natív popupja bezáródott húzás közben (ADR-013). |
+| Kiemelt következő feladat | Döntés kell: következő tool (pl. Markdown → PDF), vagy MON-001/002 (AdSense) folytatása |
+| Aktuális kódmódosítás | – (minden pusholva és deployolva: `ac40149`) |
 | Blokkoló | – (Google AdSense felülvizsgálat, MON-001, a háttérben fut, nem blokkol) |
-| Utolsó tartós döntés | – |
+| Utolsó tartós döntés | ADR-013 (2026-08-23) — dinamikus lista + natív `<input type="color">`: ne épüljön újra a DOM minden bemenet-változásnál |
 
 ## Következő pontos lépések
 
-1. Commit + push jóváhagyása.
-2. Migráció (`db/migrations/009_seed_css_gradient_builder.sql`) lefuttatása phpMyAdminban élesben.
-3. cPanel Git Version Control „Pull” + Setup Node.js App „Restart”.
-4. Élő ellenőrzés: `/api/tools` listázza-e, HU+EN oldal 200-at ad-e.
-5. Ezután TOOL-006 lezárható `DONE`-ra; utána újra döntés kell: következő tool (pl. Markdown → PDF), vagy MON-001/002 (AdSense) folytatása.
-6. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
+1. Döntés kell a felhasználótól: következő tool, vagy MON-001/MON-002 (AdSense-folytatás).
+2. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001).
+3. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
 
 > Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
 ## Legutóbbi interakciók
 
-- **TOOL-005 lezárva**: Színkontraszt Ellenőrző élesben igazolva, lezárva a backlogban (commit `8517db0`, `299e52a`).
-- **Következő tool: CSS Gradient Builder**: a felhasználó a korábbi ötletlistából ezt választotta. Alacsony ambiguitású, jól definiált feladat (szabványos CSS gradient szintaxis), ezért tisztázó kérdés nélkül közvetlenül implementáltam.
-- **TOOL-006 implementáció + ellenőrzés**: teljesen kliens-oldali, tetszőleges számú (2-6) színmegállóval, lineáris/sugárirányú típusváltással, CSS + Tailwind arbitrary-value exporttal (`bg-[linear-gradient(...)]` szintaxis, aláhúzásjelekkel a szóközök helyén). Böngészőben funkcionálisan tesztelve `javascript_exec`-kel: típusváltás, szög-módosítás, szín hozzáadás (helyes középpont-pozícionálás), eltávolítás (min. 2 szín korlát betartva), érvénytelen hex-kód figyelmen kívül hagyása — minden helyes, nincs konzolhiba.
+- **TOOL-006 (CSS Gradient Builder) implementáció**: teljesen kliens-oldali, lineáris/sugárirányú típusváltás, tetszőleges számú (2-6) színmegálló, CSS + Tailwind (arbitrary-value) export. A felhasználó kérdésére (más CSS framework kimenetét is érdemes-e hozzátenni) rövid indoklással elmagyaráztam, miért marad a CSS+Tailwind páros elegendő — nem lett belőle feladat.
+- **Színválasztó UX-hiba javítása**: a felhasználó jelezte, hogy a színválasztóban nem lehet húzni a natív popup köröcskéjét, csak kattintani (szemben a Színkontraszt Ellenőrzővel). Az ok: minden bemenet-eseménynél újraépült a teljes szín-lista DOM-ja, ez bezárta a natív popupot. Javítva: a "sorok felépítése" és "kimenetek frissítése" szétválasztva (ADR-013), böngészőben igazolva (`samePickerNodeAcrossDrag: true`).
+- **Élő igazolás + lezárás**: commit `ac40149`, push, migráció (009) phpMyAdminban, cPanel Pull+Restart. `curl`-lal igazolva: `/api/tools` tartalmazza a `css-gradient-builder` slugot, mindkét nyelvi oldal 200-at ad. TOOL-006 lezárva `DONE`-ra.
 
 ## Aktuális munkafájlok
 
-- `public/css-gradient-builder.html`, `public/en/css-gradient-builder.html` – új tool, még nincs commitolva
-- `db/migrations/009_seed_css_gradient_builder.sql` – új migráció, még nincs lefuttatva
+– (minden pusholva, deployolva és élesben igazolva)
 
 ## Ellenőrzési állapot
 
-- `node --check` (a beágyazott `<script>` kinyerve mindkét fájlból): szintaktikailag hibátlan.
-- Böngészőben (helyi fájlként, `javascript_exec`-kel) tesztelve: alapértelmezett gradient CSS/Tailwind kimenet pontos; lineáris↔sugárirányú váltás, szög-módosítás, szín hozzáadás/eltávolítás, min. 2 szín korlát, érvénytelen hex-kód kezelése — mind helyesen működik. Nincs konzolhiba.
-- **Még nincs ellenőrizve**: élő (quicktools.qwer.hu) viselkedés — migráció + deploy szükséges hozzá.
+- `https://quicktools.qwer.hu/api/tools` tartalmazza a `css-gradient-builder` bejegyzést (curl-lal igazolva).
+- `https://quicktools.qwer.hu/css-gradient-builder.html` és `.../en/css-gradient-builder.html` 200-at ad.
