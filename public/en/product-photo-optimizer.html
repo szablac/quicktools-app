@@ -176,6 +176,8 @@
           ctx.clearRect(0, 0, 1200, 1200);
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, 1200, 1200);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
 
           const maxDim = 1000;
           const scale = Math.min(maxDim / img.width, maxDim / img.height);
@@ -244,6 +246,11 @@
     function openLightbox() {
       if (!canvas.classList.contains('has-image')) return;
       lightboxImg.src = canvas.toDataURL('image/png');
+      // Show at true 1:1 pixel scale (1 image px = 1 device px), not 1 image px = 1 CSS px —
+      // otherwise HiDPI screens upscale the bitmap and it looks soft.
+      const dpr = window.devicePixelRatio || 1;
+      lightboxImg.style.width = (canvas.width / dpr) + 'px';
+      lightboxImg.style.height = (canvas.height / dpr) + 'px';
       lightbox.classList.add('open');
     }
     function closeLightbox() {
