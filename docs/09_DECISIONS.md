@@ -75,3 +75,11 @@
 - Dátum: 2026-08-23
 - Döntés: a Claude Design canvasban bemutatott 3+4 irány közül (techno vonal elvetve) a **„Soft Calm"** irány lett kiválasztva: puha lekerekített kártyák (24px), meleg törtfehér háttér (`#f9f8f5`), zsályazöld akcentus (`#5b7f6f`), Plus Jakarta Sans betűtípus. A főoldal kártyás eszköz-elrendezést kap, az egyes tool-aloldalak részletesebben mutatják be az adott eszközt (lépések, csomag-tartalom).
 - Indok: a felhasználó választása — barátságos, széles közönségnek (kisvállalkozók, fejlesztők, kreatívok) is befogadható megjelenés. **Tudatosan ideiglenes/iterálható**: a felhasználó jelezte, hogy a design később, több eszköz megléte után újragondolásra kerül — ez nem végleges márka-döntés.
+
+### ADR-009 – Email cím és copyright eltávolítása az oldalról
+
+- Állapot: **ELFOGADOTT**
+- Dátum: 2026-08-23
+- Döntés: a `szablac@gmail.com` email cím és a „© 2026 QuickTools.hu" copyright-sor eltávolítva minden oldalról, **beleértve** az adatvédelmi tájékoztató szövegét is (adatkezelői elérhetőség, érintetti jogok szakasz).
+- Indok: a felhasználó döntése — (1) elkerülni a bot-scraping miatti spam-forgalmat, (2) a domainnév (`quicktools.qwer.hu`) nem végleges, ezért korai lenne rá copyright-márkanevet kötni.
+- **Kockázat, amit tudatosan vállal a felhasználó**: az adatvédelmi tájékoztatóban jelenleg nincs semmilyen látható kapcsolattartási elérhetőség az adatkezelőhöz — ez a GDPR szerint általában elvárt lenne, amint tényleges személyes adatkezelés (pl. AdSense-sütik) élesedik. **Felülvizsgálandó**, mielőtt az AdSense (MON-001) ténylegesen élesedik, vagy a domain véglegesül.
