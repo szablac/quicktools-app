@@ -6,18 +6,19 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz + TOOL-001 (Favicon Generator) KÉSZ, élesben ellenőrizve |
-| Aktív feladat | – (TOOL-001 lezárva) |
-| Állapot | `https://quicktools.qwer.hu/favicon-generator.html` élesben működik, a főoldal listázza; a feltöltés→ZIP-letöltés folyamat élesben tesztelve |
+| Fázis | 1 – Platform-váz + TOOL-001 KÉSZ; vizuális design (ADR-008, Soft Calm) élesben |
+| Aktív feladat | – (design-frissítés lezárva) |
+| Állapot | Claude Design canvasban 7 irány (3 techno, elvetve + 3 modern + 1 hibrid) bemutatva; felhasználó az **F — Soft Calm** irányt választotta; beépítve az élő oldalba, ellenőrizve |
 | Kiemelt következő feladat | Nincs kijelölt aktív tétel — döntés kell: következő tool, vagy OPS-001 (cache-stratégia), vagy MON-001/002 (AdSense) |
 | Aktuális kódmódosítás | – (minden pusholva és deployolva) |
 | Blokkoló | – (Google AdSense felülvizsgálat még fut a háttérben, MON-001, nem blokkol) |
-| Utolsó tartós döntés | Favicon Generator: sima HTML+JS (nem Vue), jimp+png-to-ico+archiver (natív bináris nélküli csomagok, a Prisma-tanulság alapján) |
+| Utolsó tartós döntés | ADR-008 — Soft Calm design irány, tudatosan ideiglenes/iterálható több tool megléte után |
 
 ## Következő pontos lépések
 
 1. Döntés kell a felhasználótól: következő tool, OPS-001 (cache-frissülési stratégia), vagy MON-001/MON-002 (AdSense-folytatás).
 2. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001), utána MON-002 (quicktools.qwer.hu külön webhelyként).
+3. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
 
 > Megjegyzés: az `/api/tools` végpont ellenőrzésekor kiderült, hogy a cPanel/Apache szintjén van egy alapértelmezett `max-age=172800` (2 nap) cache-irányelv, amit a Node-kód `no-store`-ja nem tud teljesen felülírni — ez a **visszatérő** látogatóknál késleltetheti a statikus tartalom frissülését jövőbeli deploy-oknál. Felvéve: OPS-001 (`docs/10_BACKLOG.md`).
 
