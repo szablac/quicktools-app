@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Page Selector – QuickTools.hu</title>
+<meta name="description" content="Upload a PDF, select pages, and download only the ones you picked — or remove just those. Everything happens in your browser.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<script type="importmap">
+{
+  "imports": {
+    "pdf-lib": "https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.esm.min.js",
+    "pdfjs-dist": "https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.mjs"
+  }
+}
+</script>
+<style>
+  :root {
+    --bg: #f9f8f5; --card: #ffffff; --card-muted: #f2f0eb; --border: #ece9e2;
+    --text: #2b2e2c; --muted: #6b6f6a; --accent: #5b7f6f; --accent-dark: #46655a; --accent-tint: #e9efe9;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 32px; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 32px 0; }
+  .logo { font-weight: 700; font-size: 19px; }
+  .back { font-size: 14px; color: var(--muted); }
+  header.hero { padding: 8px 0 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .icon-lg { width: 56px; height: 56px; border-radius: 18px; background: var(--accent-tint); display: flex; align-items: center; justify-content: center; }
+  h1 { margin: 0; font-size: 30px; font-weight: 700; }
+  .sub { margin: 0; font-size: 15px; line-height: 1.7; color: var(--muted); max-width: 520px; }
+
+  .dropzone { display: block; border: 2px dashed #d8d4c9; border-radius: 24px; padding: 48px 24px; text-align: center; background: var(--card); transition: border-color .15s, background .15s; cursor: pointer; margin-bottom: 40px; }
+  .dropzone.dragover, .dropzone:hover { border-color: var(--accent); background: #f5f8f6; }
+  .dropzone input { display: none; }
+  .dz-icon { width: 44px; height: 44px; margin: 0 auto 12px; border-radius: 14px; background: var(--accent-tint); display: flex; align-items: center; justify-content: center; }
+  .dz-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .dz-btn { display: inline-block; padding: 8px 18px; border-radius: 100px; border: 1.5px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 13px; }
+  .dz-hint { font-size: 12px; color: var(--muted); margin-top: 12px; }
+
+  .editor { display: none; }
+  .editor.active { display: block; }
+
+  .file-info { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .file-name { font-size: 13px; font-weight: 600; }
+  .file-swap { font-size: 13px; color: var(--accent); cursor: pointer; font-weight: 600; }
+
+  .mode-box { border-radius: 20px; border: 1px solid var(--border); background: var(--card); padding: 20px; margin-bottom: 24px; }
+  .mode-toggle { display: inline-flex; border-radius: 100px; background: var(--card-muted); padding: 4px; margin-bottom: 12px; }
+  .mode-btn { border: none; background: transparent; font-family: inherit; font-weight: 700; font-size: 13px; padding: 9px 20px; border-radius: 100px; cursor: pointer; color: var(--muted); }
+  .mode-btn.active { background: var(--accent); color: #fff; }
+  .mode-explain { font-size: 13px; line-height: 1.65; color: var(--muted); margin: 0 0 8px; }
+  .mode-explain b { color: var(--text); }
+  .mode-current { font-size: 13px; font-weight: 600; color: var(--accent-dark); margin: 0; }
+
+  .toolbar { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .toolbar-link { font-size: 13px; font-weight: 600; color: var(--accent); cursor: pointer; }
+  .toolbar-status { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+  .page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .page-thumb { position: relative; border-radius: 12px; border: 2px solid var(--border); background: var(--card-muted); cursor: pointer; overflow: hidden; transition: border-color .12s, box-shadow .12s; display: flex; align-items: center; justify-content: center; aspect-ratio: 3 / 4; }
+  .page-thumb:hover { border-color: #b9c4bd; }
+  .page-thumb.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
+  .page-thumb canvas { max-width: 100%; max-height: 100%; display: block; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  .page-thumb .page-num { position: absolute; left: 6px; bottom: 6px; background: rgba(43,46,44,0.75); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 100px; }
+  .page-thumb .page-check { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; }
+  .page-thumb.selected .page-check { background: var(--accent); border-color: var(--accent); }
+  .page-thumb .page-check svg { display: none; width: 12px; height: 12px; }
+  .page-thumb.selected .page-check svg { display: block; }
+  .page-thumb.loading { color: var(--muted); font-size: 11px; }
+
+  .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 40px; flex-wrap: wrap; }
+  .btn { padding: 12px 26px; border-radius: 100px; border: none; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(91,127,111,0.3); }
+  .btn-primary:disabled { background: #c7c2b5; cursor: not-allowed; }
+  .status { font-size: 13px; color: var(--muted); }
+  .status.ok { color: var(--accent-dark); font-weight: 600; }
+  .status.err { color: #b5482f; font-weight: 600; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; padding: 12px 0 56px; }
+  @media (max-width: 640px) { .steps { grid-template-columns: 1fr; } }
+  .step { border-radius: 20px; padding: 24px; background: var(--card); border: 1px solid var(--border); text-align: center; }
+  .step-num { font-size: 22px; margin-bottom: 8px; color: var(--accent); font-weight: 700; }
+  .step-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .step-desc { font-size: 12px; line-height: 1.5; color: var(--muted); }
+
+  footer { padding: 24px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <div class="logo">QuickTools.hu</div>
+      <div class="back">&larr; <a href="/en/">All tools</a></div>
+    </nav>
+
+    <header class="hero">
+      <div class="icon-lg">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><path d="M8 3H6a2 2 0 00-2 2v14a2 2 0 002 2h9a2 2 0 002-2v-9l-6-7z"/><path d="M14 3v6h6"/><path d="m9 15 2 2 4-4"/></svg>
+      </div>
+      <h1>PDF Page Selector</h1>
+      <p class="sub">Upload a PDF, select pages by clicking, then download the result — the file never leaves your browser.</p>
+    </header>
+
+    <label class="dropzone" id="dropzone" for="file-input">
+      <input type="file" id="file-input" accept="application/pdf,.pdf">
+      <div class="dz-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+      <div class="dz-title">Drop your PDF here</div>
+      <span class="dz-btn">Choose a file</span>
+      <div class="dz-hint">PDF files only. For larger files (100+ pages), loading the previews may take a few seconds.</div>
+    </label>
+
+    <div class="editor" id="editor">
+      <div class="file-info">
+        <div class="file-name" id="file-name"></div>
+        <div class="file-swap" id="file-swap">Upload a different file</div>
+      </div>
+
+      <div class="mode-box">
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="mode-keep" type="button">Keep</button>
+          <button class="mode-btn" id="mode-remove" type="button">Remove</button>
+        </div>
+        <p class="mode-explain">
+          Two modes are available, pick whichever is faster for what you want to select:<br>
+          <b>Keep</b> mode — only the pages you select below end up in the new PDF, everything else is left out.<br>
+          <b>Remove</b> mode — the opposite: the pages you select are dropped, everything else stays in the new PDF.
+        </p>
+        <p class="mode-current" id="mode-current"></p>
+      </div>
+
+      <div class="toolbar">
+        <span class="toolbar-link" id="select-all">Select all</span>
+        <span class="toolbar-link" id="select-none">Clear selection</span>
+        <span class="toolbar-status" id="page-status"></span>
+      </div>
+
+      <div class="page-grid" id="page-grid"></div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="download-btn" disabled>Download</button>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Upload</div>
+        <div class="step-desc">Any PDF, any number of pages.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Select</div>
+        <div class="step-desc">Click pages, choose the mode (keep/remove).</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Download</div>
+        <div class="step-desc">A clean, standalone PDF — nothing touches a server.</div>
+      </div>
+    </div>
+
+    <footer>
+      <div><a href="/en/privacy.html">Privacy Policy</a> &middot; <a href="/en/cookies.html">Cookie Policy</a></div>
+    </footer>
+  </div>
+
+  <script type="module">
+    import { PDFDocument } from 'pdf-lib';
+    import * as pdfjsLib from 'pdfjs-dist';
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.worker.mjs';
+
+    const fileInput = document.getElementById('file-input');
+    const dropzone = document.getElementById('dropzone');
+    const editor = document.getElementById('editor');
+    const fileNameEl = document.getElementById('file-name');
+    const fileSwap = document.getElementById('file-swap');
+    const modeKeepBtn = document.getElementById('mode-keep');
+    const modeRemoveBtn = document.getElementById('mode-remove');
+    const modeCurrent = document.getElementById('mode-current');
+    const selectAllLink = document.getElementById('select-all');
+    const selectNoneLink = document.getElementById('select-none');
+    const pageStatus = document.getElementById('page-status');
+    const pageGrid = document.getElementById('page-grid');
+    const downloadBtn = document.getElementById('download-btn');
+    const status = document.getElementById('status');
+
+    let originalBytes = null;
+    let originalFileName = 'document.pdf';
+    let totalPages = 0;
+    let selected = new Set();
+    let mode = 'keep'; // 'keep' | 'remove'
+
+    function resultCount() {
+      return mode === 'keep' ? selected.size : totalPages - selected.size;
+    }
+
+    function updateStatusBar() {
+      pageStatus.textContent = totalPages
+        ? `${selected.size} / ${totalPages} pages selected`
+        : '';
+      const count = resultCount();
+      modeCurrent.textContent = totalPages
+        ? `Currently: ${mode === 'keep' ? 'Keep' : 'Remove'} — the new PDF will contain ${count} page(s).`
+        : '';
+      downloadBtn.disabled = count <= 0;
+      downloadBtn.textContent = count > 0 ? `Download (${count} page${count === 1 ? '' : 's'})` : 'Download';
+    }
+
+    function setMode(newMode) {
+      mode = newMode;
+      modeKeepBtn.classList.toggle('active', mode === 'keep');
+      modeRemoveBtn.classList.toggle('active', mode === 'remove');
+      updateStatusBar();
+    }
+    modeKeepBtn.addEventListener('click', () => setMode('keep'));
+    modeRemoveBtn.addEventListener('click', () => setMode('remove'));
+
+    selectAllLink.addEventListener('click', () => {
+      for (let i = 0; i < totalPages; i++) selected.add(i);
+      pageGrid.querySelectorAll('.page-thumb').forEach((el) => el.classList.add('selected'));
+      updateStatusBar();
+    });
+    selectNoneLink.addEventListener('click', () => {
+      selected.clear();
+      pageGrid.querySelectorAll('.page-thumb').forEach((el) => el.classList.remove('selected'));
+      updateStatusBar();
+    });
+
+    function togglePage(index, thumbEl) {
+      if (selected.has(index)) {
+        selected.delete(index);
+        thumbEl.classList.remove('selected');
+      } else {
+        selected.add(index);
+        thumbEl.classList.add('selected');
+      }
+      updateStatusBar();
+    }
+
+    const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>';
+
+    async function loadFile(file) {
+      status.textContent = '';
+      status.className = 'status';
+      downloadBtn.disabled = true;
+      selected = new Set();
+      pageGrid.innerHTML = '';
+      totalPages = 0;
+
+      try {
+        originalFileName = file.name || 'document.pdf';
+        const buf = await file.arrayBuffer();
+        originalBytes = new Uint8Array(buf);
+
+        fileNameEl.textContent = originalFileName;
+        dropzone.style.display = 'none';
+        editor.classList.add('active');
+        setMode('keep');
+
+        // pdf.js may take ownership of the data array (transfers it to its worker) — so we
+        // process a separate copy for pdf-lib to keep the original bytes intact.
+        const loadingTask = pdfjsLib.getDocument({ data: originalBytes.slice() });
+        const pdfDoc = await loadingTask.promise;
+        totalPages = pdfDoc.numPages;
+
+        for (let i = 1; i <= totalPages; i++) {
+          const thumb = document.createElement('div');
+          thumb.className = 'page-thumb loading';
+          thumb.textContent = '…';
+          pageGrid.appendChild(thumb);
+        }
+        updateStatusBar();
+
+        const thumbEls = pageGrid.querySelectorAll('.page-thumb');
+        for (let i = 1; i <= totalPages; i++) {
+          const thumbEl = thumbEls[i - 1];
+          const page = await pdfDoc.getPage(i);
+          const unscaled = page.getViewport({ scale: 1 });
+          const targetWidth = 220;
+          const scale = targetWidth / unscaled.width;
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
+
+          thumbEl.classList.remove('loading');
+          thumbEl.textContent = '';
+          thumbEl.appendChild(canvas);
+
+          const numTag = document.createElement('div');
+          numTag.className = 'page-num';
+          numTag.textContent = String(i);
+          thumbEl.appendChild(numTag);
+
+          const check = document.createElement('div');
+          check.className = 'page-check';
+          check.innerHTML = CHECK_SVG;
+          thumbEl.appendChild(check);
+
+          const index = i - 1;
+          thumbEl.addEventListener('click', () => togglePage(index, thumbEl));
+        }
+
+        status.textContent = `Done — ${totalPages} pages loaded.`;
+        status.className = 'status ok';
+      } catch (err) {
+        status.textContent = 'Error reading the PDF: ' + err.message;
+        status.className = 'status err';
+      }
+    }
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) loadFile(fileInput.files[0]);
+    });
+
+    ['dragover', 'dragenter'].forEach((evt) =>
+      dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); })
+    );
+    ['dragleave', 'drop'].forEach((evt) =>
+      dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); })
+    );
+    dropzone.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        loadFile(fileInput.files[0]);
+      }
+    });
+
+    fileSwap.addEventListener('click', () => {
+      editor.classList.remove('active');
+      dropzone.style.display = '';
+      fileInput.value = '';
+      originalBytes = null;
+      totalPages = 0;
+      selected = new Set();
+      pageGrid.innerHTML = '';
+      status.textContent = '';
+    });
+
+    downloadBtn.addEventListener('click', async () => {
+      if (!originalBytes || resultCount() <= 0) return;
+      downloadBtn.disabled = true;
+      status.textContent = 'Assembling PDF…';
+      status.className = 'status';
+      try {
+        const srcDoc = await PDFDocument.load(originalBytes);
+        const allIndices = Array.from({ length: totalPages }, (_, i) => i);
+        const indicesToCopy = mode === 'keep'
+          ? allIndices.filter((i) => selected.has(i))
+          : allIndices.filter((i) => !selected.has(i));
+
+        const outDoc = await PDFDocument.create();
+        const copiedPages = await outDoc.copyPages(srcDoc, indicesToCopy);
+        copiedPages.forEach((p) => outDoc.addPage(p));
+        const bytes = await outDoc.save();
+
+        const baseName = originalFileName.replace(/\.pdf$/i, '');
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${baseName}-selected.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        status.textContent = 'Done — downloaded.';
+        status.className = 'status ok';
+      } catch (err) {
+        status.textContent = 'Error assembling the download: ' + err.message;
+        status.className = 'status err';
+      } finally {
+        updateStatusBar();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -23,11 +23,13 @@
   h1 { margin: 0; font-size: 32px; font-weight: 700; }
   .sub { margin: 0; font-size: 15px; line-height: 1.7; color: var(--muted); max-width: 460px; }
 
-  .dropzone { border: 2px dashed #d8d4c9; border-radius: 24px; padding: 44px 32px; text-align: center; background: var(--card); transition: border-color .15s, background .15s; cursor: pointer; }
+  .dropzone { display: block; border: 2px dashed #d8d4c9; border-radius: 24px; padding: 44px 32px; text-align: center; background: var(--card); transition: border-color .15s, background .15s; cursor: pointer; }
   .dropzone.dragover, .dropzone:hover { border-color: var(--accent); background: #f5f8f6; }
   .dropzone input { display: none; }
-  .dz-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-  .dz-hint { font-size: 12px; color: var(--muted); }
+  .dz-icon { width: 44px; height: 44px; margin: 0 auto 12px; border-radius: 14px; background: var(--accent-tint); display: flex; align-items: center; justify-content: center; }
+  .dz-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+  .dz-btn { display: inline-block; padding: 8px 18px; border-radius: 100px; border: 1.5px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 13px; }
+  .dz-hint { font-size: 12px; color: var(--muted); margin-top: 12px; }
   .preview { max-width: 72px; max-height: 72px; border-radius: 12px; margin-top: 14px; }
 
   .btn { display: block; margin: 20px auto 0; padding: 15px 40px; border-radius: 100px; background: var(--accent); color: #fff; border: none; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
@@ -72,7 +74,9 @@
     <form id="favicon-form">
       <label class="dropzone" id="dropzone" for="image-input">
         <input type="file" id="image-input" name="image" accept="image/png,image/jpeg,image/webp,image/gif" required>
-        <div class="dz-title">Drag an image here, or click to choose one</div>
+        <div class="dz-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+        <div class="dz-title">Drag an image here</div>
+        <span class="dz-btn">Choose a file</span>
         <div class="dz-hint">PNG · JPEG · WEBP · GIF, max 5MB</div>
         <img id="preview" class="preview" style="display:none" alt="Preview">
       </label>

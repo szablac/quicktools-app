@@ -32,6 +32,8 @@
 | 6 | PROD-002 | **P0** | `DONE` | Kapcsolattartási elérhetőség: saját, DB-be mentő kapcsolatfelvételi űrlap (`POST /api/contact`, honeypot + rate-limit, nincs kimenő email) az adatvédelmi tájékoztatóban (HU+EN), nyilvános email cím nélkül — élesben ellenőrizve (érvénytelen/érvényes/honeypot eset, HU+EN hibaüzenet, `utf8mb4` kódolás javítva és igazolva) | domain véglegesítés vagy MON-001 jóváhagyás |
 | 7 | TOOL-002 | P2 | `DONE` | JSON Viewer megvalósítva (teljesen kliens-oldali, backend nélkül), élesben ellenőrizve | PLAT-001 (kész) |
 | 8 | TOOL-003 | P2 | `DONE` | Termékfotó Optimalizáló megvalósítva (teljesen kliens-oldali, Canvas API), élesben ellenőrizve | PLAT-001 (kész) |
+| 9 | TOOL-004 | P2 | `VERIFY` | PDF Oldal Kiválasztó megvalósítva (teljesen kliens-oldali, `pdf-lib` + `pdfjs-dist` CDN-ről, megtartás/eltávolítás mód). A felhasználó saját böngészőjében (helyi szerveren át) igazolta: bélyegképek megjelennek, kattinthatók, letöltés működik. Élesítés (migráció 007 + deploy) még hátravan. | PLAT-001 (kész) |
+| 10 | UX-001 | P2 | `DONE` | Feltöltő doboz (dropzone) egységes, beszédesebb megjelenítése mindhárom fájlfeltöltős toolban (Favicon Generator, Termékfotó Optimalizáló, PDF Oldal Kiválasztó): ikon + kiemelt "Fájl kiválasztása" gomb-szerű elem. Menet közben egy valódi CSS-hibát is feltárt és javított (ld. ADR-012). | TOOL-001, TOOL-003 (kész), TOOL-004 |
 
 ## Kiemelt feladatok elfogadási feltételei
 

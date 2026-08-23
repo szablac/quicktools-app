@@ -33,11 +33,13 @@
   .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; align-items: start; }
   @media (max-width: 760px) { .panes { grid-template-columns: 1fr; } }
 
-  .dropzone { border: 2px dashed #d8d4c9; border-radius: 24px; padding: 40px 24px; text-align: center; background: var(--card); transition: border-color .15s, background .15s; cursor: pointer; }
+  .dropzone { display: block; border: 2px dashed #d8d4c9; border-radius: 24px; padding: 40px 24px; text-align: center; background: var(--card); transition: border-color .15s, background .15s; cursor: pointer; }
   .dropzone.dragover, .dropzone:hover { border-color: var(--accent); background: #f5f8f6; }
   .dropzone input { display: none; }
-  .dz-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-  .dz-hint { font-size: 12px; color: var(--muted); }
+  .dz-icon { width: 40px; height: 40px; margin: 0 auto 10px; border-radius: 12px; background: var(--accent-tint); display: flex; align-items: center; justify-content: center; }
+  .dz-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .dz-btn { display: inline-block; padding: 7px 16px; border-radius: 100px; border: 1.5px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 12px; }
+  .dz-hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
 
   .rembg-toggle { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 13px; color: var(--text); cursor: pointer; }
   .rembg-toggle input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
@@ -91,7 +93,9 @@
       <div>
         <label class="dropzone" id="dropzone" for="image-input">
           <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp,image/gif" required>
-          <div class="dz-title">Húzd ide a fotót, kattints a kiválasztáshoz, vagy illeszd be (Ctrl+V)</div>
+          <div class="dz-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+          <div class="dz-title">Húzd ide a fotót, vagy illeszd be (Ctrl+V)</div>
+          <span class="dz-btn">Fájl kiválasztása</span>
           <div class="dz-hint">PNG · JPEG · WEBP · GIF · vágólapról beillesztett screenshot is</div>
         </label>
         <label class="rembg-toggle">
