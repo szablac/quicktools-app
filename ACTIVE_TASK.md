@@ -6,36 +6,40 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz + TOOL-001..006 KÉSZ; PROD-002, OPS-001, UX-001 KÉSZ; UX-002 (kártya-ikonok) kódja kész, deploy hátravan |
-| Aktív feladat | UX-002 — commit/push/deploy jóváhagyásra vár |
-| Állapot | A főoldal (HU+EN) tool-kártyái mostantól a saját tool egyedi hero-ikonját mutatják (nem egy generikus ikont mindenhol) — egy `TOOL_ICONS` slug→SVG leképezéssel, ismeretlen/jövőbeli slugra visszaesve a régi generikus ikonra. Böngészőben igazolva: 6 kártya, 6 egyedi ikon, nincs konzolhiba. |
-| Kiemelt következő feladat | Commit + push jóváhagyása, cPanel Pull+Restart, élő ellenőrzés — nincs DB-migráció, csak statikus fájlok |
-| Aktuális kódmódosítás | `public/index.html`, `public/en/index.html` — helyben, még nincs commitolva |
+| Fázis | 1 – Platform-váz + TOOL-001..006 KÉSZ; PROD-002, OPS-001, UX-001, UX-002 KÉSZ; I18N-001 (nyelvi útvonalválasztás) kódja kész, deploy hátravan |
+| Aktív feladat | I18N-001 — commit/push/deploy jóváhagyásra vár (ADR-014 egyelőre `JAVASOLT`, jóváhagyás után `ELFOGADOTT`-ra vált) |
+| Állapot | `GET /`-re a `geoip-lite` csomaggal országfelismerés: nem magyar IP → 302 a `/en/`-re, `qt_lang` süti (1 év) emlékszik a döntésre, hogy ne fusson le újra és a kézi navigálást ne írja felül. Csak a gyökér útvonalra vonatkozik, mélylinkeket nem érint. Adatvédelmi tájékoztató + Cookie szabályzat (HU+EN) frissítve. |
+| Kiemelt következő feladat | Commit + push jóváhagyása, cPanel Pull + **NPM Install** (package.json változott!) + Restart, élő ellenőrzés |
+| Aktuális kódmódosítás | `server.js`, `package.json`, `package-lock.json`, `public/adatvedelem.html`, `public/en/privacy.html`, `public/sutik.html`, `public/en/cookies.html` — helyben, még nincs commitolva |
 | Blokkoló | – (Google AdSense felülvizsgálat, MON-001, a háttérben fut, nem blokkol) |
-| Utolsó tartós döntés | – |
+| Utolsó tartós döntés | ADR-014 (2026-08-23, `JAVASOLT`) — IP-alapú nyelvi útvonalválasztás `geoip-lite`-tal, csak a gyökér útvonalon |
 
 ## Következő pontos lépések
 
 1. Commit + push jóváhagyása.
-2. cPanel Git Version Control „Pull” + Setup Node.js App „Restart” (nincs migráció, ez a lépés csak statikus fájlt frissít).
-3. Élő ellenőrzés: a főoldal kártyáin megjelennek-e az egyedi ikonok.
-4. Ezután UX-002 lezárható `DONE`-ra; utána újra döntés kell: következő tool (pl. Markdown → PDF), vagy MON-001/002 (AdSense) folytatása.
+2. cPanel Git Version Control „Pull” → **Run NPM Install** (mivel a `package.json` változott, ez most kötelező lépés, nem hagyható ki) → Setup Node.js App „Restart”.
+3. Élő ellenőrzés: `curl -I` a `/`-re külföldi IP-t szimulálva (ha lehetséges), és/vagy manuális teszt VPN-nel vagy a felhasználó saját (magyar) böngészőjével — a magyar oldalnak kell maradnia, redirect nélkül.
+4. Ezután I18N-001 lezárható `DONE`-ra, ADR-014 `ELFOGADOTT`-ra; utána újra döntés kell: következő tool, vagy MON-001/002 (AdSense) folytatása.
 5. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
 
 > Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
 ## Legutóbbi interakciók
 
-- **TOOL-006 lezárva**: CSS Gradient Builder élesben igazolva, egy UX-hibát is javítottunk (színválasztó húzása, ADR-013), lezárva a backlogban (commit `ac40149`, `87315d3`).
-- **UX-002 — kártya-ikonok egyénivé tétele**: a felhasználó kérte, hogy a főoldal tool-kártyái a saját (belül, a tool oldalán használt) ikont mutassák a generikus kép-ikon helyett. Bevezettem egy `TOOL_ICONS` slug→SVG leképezést mindkét (HU/EN) `index.html`-ben, minden meglévő 6 toolhoz a saját hero-ikonjával; ismeretlen slugra a régi generikus ikonra esik vissza (védelem jövőbeli, még nem mappelt toolok ellen).
-- **Ellenőrzés**: helyi teszt-szerverrel (mock `/api/tools` válasszal, hogy a fetch működjön `file://` nélkül) igazoltam böngészőben: mind a 6 kártya SVG-t kap, és mind a 6 egyedi (nincs két egyforma), nincs konzolhiba.
+- **UX-002 lezárva**: főoldal tool-kártyák egyedi ikonokkal élesben igazolva, lezárva a backlogban (commit `7361284`).
+- **I18N-001 kérés**: a felhasználó kérte, hogy magyar IP-ről a magyar, külföldiről az angol kezdőoldal töltődjön be. Tisztázó kérdés közben ("külföldiként nem csak US és AU...") megerősítettem: a logika minden nem-HU országkódra vonatkozik, nincs szűkített lista.
+- **I18N-001 implementáció + ellenőrzés**: `geoip-lite` (Apache-2.0, helyi adatbázis, nincs külső API-hívás) hozzáadva függőségként. `GET /`-re middleware: cookie-ellenőrzés → geoip-lekérdezés → redirect vagy `next()`. Node.js-ben igazolva ismert HU/US/AU/DE/SK IP-tartományokkal, majd mock kérés-válasz objektumokkal mind a 4 döntési ág (van cookie / magyar / külföldi / ismeretlen IP). Adatvédelmi tájékoztató és Cookie szabályzat (HU+EN) frissítve a `qt_lang` süti és az IP-használat feltüntetésével.
 
 ## Aktuális munkafájlok
 
-- `public/index.html`, `public/en/index.html` – `TOOL_ICONS` leképezés hozzáadva, még nincs commitolva
+- `server.js` – `geoip-lite` alapú nyelvi redirect middleware `GET /`-re
+- `package.json`, `package-lock.json` – új függőség: `geoip-lite`
+- `public/adatvedelem.html`, `public/en/privacy.html` – IP-alapú nyelvi döntés feltüntetve
+- `public/sutik.html`, `public/en/cookies.html` – `qt_lang` süti feltüntetve
 
 ## Ellenőrzési állapot
 
-- `node --check` (a beágyazott `<script>` kinyerve mindkét fájlból): szintaktikailag hibátlan.
-- Böngészőben (helyi szerver + mock `/api/tools`) igazolva: 6 kártya, 6 egyedi SVG-ikon, nincs konzolhiba.
-- **Még nincs ellenőrizve**: élő (quicktools.qwer.hu) viselkedés — deploy szükséges hozzá (migráció nem kell).
+- `node --check server.js`: szintaktikailag hibátlan.
+- `geoip-lite` országfelismerés Node.js-ben igazolva öt ismert IP-tartománnyal (HU, US, AU, DE, SK) — mind helyes.
+- A middleware döntési logikája (cookie-ellenőrzés, redirect, cookie-beállítás) mock `req`/`res` objektumokkal mind a 4 esetben (van cookie / magyar IP / külföldi IP / ismeretlen IP) a várt módon viselkedik.
+- **Még nincs ellenőrizve**: élő (quicktools.qwer.hu) viselkedés valódi HTTP-kéréssel — deploy szükséges hozzá (package.json változott, NPM Install kötelező lépés).

@@ -5,8 +5,45 @@ const multer = require('multer');
 const { Jimp, JimpMime } = require('jimp');
 const pngToIco = require('png-to-ico').default;
 const { ZipArchive } = require('archiver');
+const geoip = require('geoip-lite');
 
 const app = express();
+
+const LANG_COOKIE = 'qt_lang';
+const LANG_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 év
+
+function getLangCookie(req) {
+  const header = req.headers.cookie || '';
+  const match = header.match(/(?:^|;\s*)qt_lang=(hu|en)/);
+  return match ? match[1] : null;
+}
+
+function setLangCookie(res, lang) {
+  res.append(
+    'Set-Cookie',
+    `${LANG_COOKIE}=${lang}; Max-Age=${LANG_COOKIE_MAX_AGE}; Path=/; SameSite=Lax; Secure; HttpOnly`
+  );
+}
+
+// Első látogatáskor (amíg a felhasználó nem választott kézzel nyelvet — ezt a
+// `qt_lang` cookie jelzi) az IP-cím alapján magyar/külföldi látogatót különböztetünk
+// meg: nem magyar országkód esetén átirányítunk az angol nyelvű kezdőlapra.
+// Ismeretlen/fel nem ismerhető IP-nél (pl. helyi teszt) a magyar oldal marad az
+// alapértelmezett, mivel a célközönség elsődlegesen magyar (docs/01_PROJECT_FOUNDATIONS.md).
+app.get('/', (req, res, next) => {
+  if (getLangCookie(req)) return next();
+
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress;
+  const geo = geoip.lookup(ip);
+
+  if (geo && geo.country && geo.country !== 'HU') {
+    setLangCookie(res, 'en');
+    return res.redirect(302, '/en/');
+  }
+
+  setLangCookie(res, 'hu');
+  next();
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '10kb' }));

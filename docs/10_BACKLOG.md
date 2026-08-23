@@ -36,7 +36,8 @@
 | 10 | UX-001 | P2 | `DONE` | Feltöltő doboz (dropzone) egységes, beszédesebb megjelenítése mindhárom fájlfeltöltős toolban (Favicon Generator, Termékfotó Optimalizáló, PDF Oldal Kiválasztó): ikon + kiemelt "Fájl kiválasztása" gomb-szerű elem. Menet közben egy valódi CSS-hibát is feltárt és javított (ld. ADR-012), élesben igazolva. | TOOL-001, TOOL-003 (kész), TOOL-004 |
 | 11 | TOOL-005 | P2 | `DONE` | Színkontraszt Ellenőrző megvalósítva (teljesen kliens-oldali, WCAG relatív-luminancia képlet), a számítás ismert referenciaértékekkel (pl. #767676/fehér = 4.54:1) igazolva, élesben ellenőrizve (`/api/tools` listázza, HU+EN oldal 200-at ad) | PLAT-001 (kész) |
 | 12 | TOOL-006 | P2 | `DONE` | CSS Gradient Builder megvalósítva (teljesen kliens-oldali, lineáris/sugárirányú, tetszőleges számú színmegálló, CSS + Tailwind arbitrary-value export), élesben ellenőrizve (`/api/tools` listázza, HU+EN oldal 200-at ad) | PLAT-001 (kész) |
-| 13 | UX-002 | P2 | `VERIFY` | Főoldal tool-kártyák: minden kártya a saját tool egyedi hero-ikonját mutatja a generikus placeholder helyett (`TOOL_ICONS` slug→SVG leképezés, ismeretlen slugra a régi generikus ikonra esik vissza), böngészőben igazolva (6 kártya, 6 egyedi ikon); élesítés hátravan | TOOL-001..006 |
+| 13 | UX-002 | P2 | `DONE` | Főoldal tool-kártyák: minden kártya a saját tool egyedi hero-ikonját mutatja a generikus placeholder helyett (`TOOL_ICONS` slug→SVG leképezés, ismeretlen slugra a régi generikus ikonra esik vissza), élesben ellenőrizve | TOOL-001..006 |
+| 14 | I18N-001 | P2 | `VERIFY` | Nyelvi útvonalválasztás IP-alapú országfelismeréssel (`geoip-lite`, ADR-014): magyar IP → magyar kezdőoldal, külföldi → `/en/`, `qt_lang` süti emlékszik a választásra. Csak a gyökér (`/`) útvonalra vonatkozik. Adatvédelmi/cookie szabályzat frissítve. Négy eset (van cookie / magyar IP / külföldi IP / ismeretlen IP) node-ban mock kérésekkel igazolva; élesítés hátravan | – |
 
 ## Kiemelt feladatok elfogadási feltételei
 
@@ -101,3 +102,12 @@
 - [x] Lineáris/sugárirányú váltás, szög-módosítás, szín hozzáadása/eltávolítása (min. 2 szín) böngészőben igazolva
 - [x] CSS és Tailwind (arbitrary-value) kimenet pontos szintaxissal (pl. `bg-[linear-gradient(135deg,#5b7f6f_0%,#a9c2b6_100%)]`)
 - [x] Érvénytelen hex-kód a színmegállóknál figyelmen kívül van hagyva, nem omlik össze
+
+### I18N-001
+
+- [x] Ismert magyar IP-tartományra a döntési logika a magyar oldalt választja (node-teszt)
+- [x] Ismert külföldi IP-tartományokra (US, AU, DE, SK) a döntési logika angol átirányítást választ (node-teszt)
+- [x] Ismeretlen/helyi IP-re a magyar oldal marad az alapértelmezett
+- [x] Már beállított `qt_lang` süti esetén nincs újra-átirányítás, sem újra-cookie-állítás (mock kérésekkel igazolva)
+- [ ] `db/migrations`-t nem igényel; élesben ellenőrizendő: valódi böngészőből/`curl`-lal a redirect + `Set-Cookie` viselkedés
+- [x] `adatvedelem.html`/`en/privacy.html` és `sutik.html`/`en/cookies.html` frissítve a `qt_lang` süti és az IP-alapú döntés feltüntetésével
