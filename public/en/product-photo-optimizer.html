@@ -272,11 +272,15 @@
         let sourceBlob = file;
 
         if (rembgCheckbox.checked) {
-          status.textContent = 'Removing background… (downloads a ~4 MB model on first use)';
+          const modelCached = localStorage.getItem('qt_rembg_model_cached') === '1';
+          status.textContent = modelCached
+            ? 'Removing background…'
+            : 'Removing background… (downloading a ~4 MB model now, this only happens once)';
           const removeBackground = await loadRembg();
           const fileUrl = URL.createObjectURL(file);
           const maskBlob = await removeBackground(fileUrl);
           URL.revokeObjectURL(fileUrl);
+          localStorage.setItem('qt_rembg_model_cached', '1');
           status.textContent = 'Restoring original resolution…';
           sourceBlob = await applyAlphaMask(file, maskBlob);
         }

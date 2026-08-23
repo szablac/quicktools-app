@@ -272,11 +272,15 @@
         let sourceBlob = file;
 
         if (rembgCheckbox.checked) {
-          status.textContent = 'Háttér eltávolítása… (első használatkor letölt egy kb. 4 MB-os modellt)';
+          const modelCached = localStorage.getItem('qt_rembg_model_cached') === '1';
+          status.textContent = modelCached
+            ? 'Háttér eltávolítása…'
+            : 'Háttér eltávolítása… (most először letölt egy kb. 4 MB-os modellt, ez csak egyszer történik meg)';
           const removeBackground = await loadRembg();
           const fileUrl = URL.createObjectURL(file);
           const maskBlob = await removeBackground(fileUrl);
           URL.revokeObjectURL(fileUrl);
+          localStorage.setItem('qt_rembg_model_cached', '1');
           status.textContent = 'Eredeti felbontás visszaállítása…';
           sourceBlob = await applyAlphaMask(file, maskBlob);
         }
