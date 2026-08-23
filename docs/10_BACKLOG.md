@@ -34,6 +34,7 @@
 | 8 | TOOL-003 | P2 | `DONE` | Termékfotó Optimalizáló megvalósítva (teljesen kliens-oldali, Canvas API), élesben ellenőrizve | PLAT-001 (kész) |
 | 9 | TOOL-004 | P2 | `DONE` | PDF Oldal Kiválasztó megvalósítva (teljesen kliens-oldali, `pdf-lib` + `pdfjs-dist` CDN-ről, megtartás/eltávolítás mód), élesben ellenőrizve (`/api/tools` listázza, HU+EN oldal 200-at ad) | PLAT-001 (kész) |
 | 10 | UX-001 | P2 | `DONE` | Feltöltő doboz (dropzone) egységes, beszédesebb megjelenítése mindhárom fájlfeltöltős toolban (Favicon Generator, Termékfotó Optimalizáló, PDF Oldal Kiválasztó): ikon + kiemelt "Fájl kiválasztása" gomb-szerű elem. Menet közben egy valódi CSS-hibát is feltárt és javított (ld. ADR-012), élesben igazolva. | TOOL-001, TOOL-003 (kész), TOOL-004 |
+| 11 | TOOL-005 | P2 | `VERIFY` | Színkontraszt Ellenőrző megvalósítva (teljesen kliens-oldali, WCAG relatív-luminancia képlet), a számítás ismert referenciaértékekkel (pl. #767676/fehér = 4.54:1) igazolva böngészőben; élesítés (migráció 008 + deploy) hátravan | PLAT-001 (kész) |
 
 ## Kiemelt feladatok elfogadási feltételei
 
@@ -80,3 +81,12 @@
 
 - [x] Mindhárom fájlfeltöltős tool (Favicon Generator, Termékfotó Optimalizáló, PDF Oldal Kiválasztó) dropzone-ja ikont + "Fájl kiválasztása" gombot kapott, HU+EN
 - [x] A `<label>` inline/blokk CSS-hiba (ADR-012) javítva, élesben igazolva (`display: block` jelen van)
+
+### TOOL-005
+
+- [ ] `db/migrations/008_seed_color_contrast_checker.sql` lefuttatva phpMyAdmin-ban
+- [ ] `GET /api/tools` élesben tartalmazza a `color-contrast-checker` slugot
+- [ ] `color-contrast-checker.html` és `en/color-contrast-checker.html` élesben 200-at ad
+- [x] Kontrasztarány-számítás ismert referenciaértékekkel igazolva (fekete/fehér = 21:1, #767676/fehér = 4.54:1 — pontosan a WCAG AA határon)
+- [x] Pass/fail jelvények (AA/AAA × normál/nagy szöveg) helyesen váltanak a határértékeknél
+- [x] Érvénytelen hex-kód esetén hibajelzés jelenik meg, nem omlik össze

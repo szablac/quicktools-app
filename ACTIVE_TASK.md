@@ -6,35 +6,39 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz + TOOL-001/002/003/004 KÉSZ; PROD-002, OPS-001, UX-001 KÉSZ |
-| Aktív feladat | – (nincs kijelölt aktív tétel) |
-| Állapot | PDF Oldal Kiválasztó (4. tool) élesben ellenőrizve; mindhárom fájlfeltöltős tool dropzone-ja egységesen beszédesebb megjelenítést kapott, egy valódi CSS-hibával együtt javítva (ADR-012) |
-| Kiemelt következő feladat | Döntés kell: következő tool, vagy MON-001/002 (AdSense) folytatása |
-| Aktuális kódmódosítás | – (minden pusholva és deployolva: `30a7a5a`) |
+| Fázis | 1 – Platform-váz + TOOL-001/002/003/004 KÉSZ; PROD-002, OPS-001, UX-001 KÉSZ; TOOL-005 (Színkontraszt Ellenőrző) kódja kész, deploy hátravan |
+| Aktív feladat | TOOL-005 — commit/push/migráció/deploy jóváhagyásra vár |
+| Állapot | Színkontraszt Ellenőrző elkészült: teljesen kliens-oldali, WCAG relatív-luminancia képlet, élő előnézet, 4 pass/fail jelvény (AA/AAA × normál/nagy szöveg), színcsere gomb. A számítást Node.js-ben ismert referenciaértékekkel (fekete/fehér=21:1, #767676/fehér=4.54:1) és böngészőben is igazoltam. |
+| Kiemelt következő feladat | Commit + push jóváhagyása, migráció (008) lefuttatása phpMyAdminban, cPanel Pull+Restart, élő ellenőrzés |
+| Aktuális kódmódosítás | `public/color-contrast-checker.html`, `public/en/color-contrast-checker.html`, `db/migrations/008_seed_color_contrast_checker.sql` — helyben, még nincs commitolva |
 | Blokkoló | – (Google AdSense felülvizsgálat, MON-001, a háttérben fut, nem blokkol) |
-| Utolsó tartós döntés | ADR-012 (2026-08-23) — dropzone vizuális egységesítés + `<label>` inline/blokk CSS-buktató rögzítve jövőbeli toolokhoz |
+| Utolsó tartós döntés | – |
 
 ## Következő pontos lépések
 
-1. Döntés kell a felhasználótól: következő tool, vagy MON-001/MON-002 (AdSense-folytatás).
-2. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001).
-3. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
+1. Commit + push jóváhagyása.
+2. Migráció (`db/migrations/008_seed_color_contrast_checker.sql`) lefuttatása phpMyAdminban élesben.
+3. cPanel Git Version Control „Pull” + Setup Node.js App „Restart”.
+4. Élő ellenőrzés: `/api/tools` listázza-e, a főoldal kártyája működik-e.
+5. Ezután TOOL-005 lezárható `DONE`-ra; utána újra döntés kell: következő tool (pl. CSS Gradient Builder, Markdown → PDF), vagy MON-001/002 (AdSense) folytatása.
+6. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
 
 > Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
 ## Legutóbbi interakciók
 
-- **TOOL-004 (PDF Oldal Kiválasztó) implementáció**: teljesen kliens-oldali (`pdf-lib` + `pdfjs-dist`), megtartás/eltávolítás váltható mód. Egy valódi `ReferenceError`-t találtunk és javítottunk a renderelő ciklusban — az automatizált előnézeti eszköz megbízhatatlannak bizonyult canvas-renderelés ellenőrzésére, ezért a felhasználó saját böngészőjében, helyi HTTP-szerveren át teszteltünk.
-- **UX-001 — dropzone redesign + CSS-hiba**: a felhasználó jelezte, hogy a fájlfeltöltő doboz nem elég beszédes. Ikon + "Fájl kiválasztása" gomb került mindhárom fájlfeltöltős toolba (Favicon, Termékfotó, PDF; HU+EN). Ez felszínre hozott egy valódi CSS-hibát (`<label>` inline elem blokk-gyerekekkel → szétesett doboz), javítva `display: block`-kal (ADR-012).
-- **Élő igazolás + lezárás**: commit `30a7a5a`, push, migráció (007) phpMyAdminban, cPanel Pull+Restart. `curl`-lal igazolva: `/api/tools` tartalmazza a `pdf-page-selector` slugot, mindkét nyelvi oldal 200-at ad, a `display: block` javítás élesben is jelen van. TOOL-004 és UX-001 lezárva `DONE`-ra.
+- **TOOL-004 + UX-001 lezárva**: PDF Oldal Kiválasztó és a dropzone-egységesítés élesben igazolva, lezárva a backlogban (commit `30a7a5a`, `77c2fcd`).
+- **Következő tool: Színkontraszt Ellenőrző**: a felhasználó a korábbi ötletlistából ezt választotta („Legyen a Színkontraszt ellenőrző, azzal kezdjünk”). Alacsony ambiguitású, jól definiált feladat (szabványos WCAG-képlet), ezért tisztázó kérdés nélkül, közvetlenül implementáltam.
+- **TOOL-005 implementáció + ellenőrzés**: teljesen kliens-oldali tool, `pdf-page-selector`-hoz hasonló szerkezetű oldal (nem dropzone-alapú, hanem szín-inputok). A WCAG relatív-luminancia képletet Node.js-ben külön, ismert referenciaértékekkel (fekete/fehér, #767676 határeset) igazoltam, majd böngészőben is teszteltem a pass/fail jelvények határeset-viselkedését és az érvénytelen bemenet kezelését.
 
 ## Aktuális munkafájlok
 
-– (minden pusholva, deployolva és élesben igazolva)
+- `public/color-contrast-checker.html`, `public/en/color-contrast-checker.html` – új tool, még nincs commitolva
+- `db/migrations/008_seed_color_contrast_checker.sql` – új migráció, még nincs lefuttatva
 
 ## Ellenőrzési állapot
 
-- `https://quicktools.qwer.hu/api/tools` tartalmazza a `pdf-page-selector` bejegyzést (curl-lal igazolva).
-- `https://quicktools.qwer.hu/pdf-page-selector.html` és `.../en/pdf-page-selector.html` 200-at ad.
-- `https://quicktools.qwer.hu/favicon-generator.html` tartalmazza a `.dropzone { display: block` javítást.
-- A felhasználó saját böngészőjében megerősítette: a bélyegkép-előnézet, kijelölés, letöltés és a dropzone-megjelenítés mindhárom toolban rendben van.
+- `node --check` (a beágyazott `<script>` kinyerve mindkét fájlból): szintaktikailag hibátlan.
+- A kontrasztarány-képlet Node.js-ben ismert WCAG referenciaértékekkel igazolva (21:1, 4.54:1 a #767676/fehér határesetnél).
+- Böngészőben (helyi fájlként) tesztelve: alapértelmezett színpár minden jelvényen megfelel; gyenge kontraszt (#aaaaaa/fehér, 2.32:1) minden jelvényen helyesen bukik; határeset (#767676/fehér, 4.54:1) pontosan az AA-nál billen; érvénytelen hex-kódra hibajelzés jelenik meg.
+- **Még nincs ellenőrizve**: élő (quicktools.qwer.hu) viselkedés — migráció + deploy szükséges hozzá.

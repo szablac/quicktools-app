@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color Contrast Checker – QuickTools.hu</title>
+<meta name="description" content="Pick two colors and instantly get the WCAG contrast ratio, plus whether it passes AA/AAA — for normal and large text.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --bg: #f9f8f5; --card: #ffffff; --card-muted: #f2f0eb; --border: #ece9e2;
+    --text: #2b2e2c; --muted: #6b6f6a; --accent: #5b7f6f; --accent-dark: #46655a; --accent-tint: #e9efe9;
+    --err: #b5482f; --err-tint: #f7e9e5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 32px; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 32px 0; }
+  .logo { font-weight: 700; font-size: 19px; }
+  .back { font-size: 14px; color: var(--muted); }
+  header.hero { padding: 8px 0 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .icon-lg { width: 56px; height: 56px; border-radius: 18px; background: var(--accent-tint); display: flex; align-items: center; justify-content: center; }
+  h1 { margin: 0; font-size: 30px; font-weight: 700; }
+  .sub { margin: 0; font-size: 15px; line-height: 1.7; color: var(--muted); max-width: 480px; }
+
+  .panel { border-radius: 20px; border: 1px solid var(--border); background: var(--card); padding: 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .color-row { flex: 1 1 220px; }
+  .color-row label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .color-input-group { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 12px; padding: 6px 8px; background: var(--card-muted); }
+  .color-input-group input[type="color"] { width: 32px; height: 32px; border: none; border-radius: 8px; padding: 0; cursor: pointer; background: none; flex-shrink: 0; }
+  .color-input-group input[type="text"] { border: none; background: none; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--text); width: 100%; outline: none; }
+  .swap-btn { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid var(--border); background: var(--card); color: var(--accent); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color .15s, transform .15s; }
+  .swap-btn:hover { border-color: var(--accent); transform: rotate(180deg); }
+
+  .preview { border-radius: 20px; padding: 32px; margin-bottom: 20px; transition: background-color .15s, color .15s; border: 1px solid var(--border); }
+  .preview-large { margin: 0 0 10px; font-size: 26px; font-weight: 700; }
+  .preview-normal { margin: 0; font-size: 15px; line-height: 1.6; }
+
+  .ratio-box { text-align: center; margin-bottom: 24px; }
+  .ratio-value { font-size: 44px; font-weight: 800; line-height: 1; }
+  .ratio-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .ratio-hint { font-size: 12px; color: var(--err); margin-top: 6px; display: none; }
+  .ratio-hint.show { display: block; }
+
+  .badges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 40px; }
+  @media (max-width: 560px) { .badges { grid-template-columns: 1fr; } }
+  .badge { border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); background: var(--card); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .badge.pass { background: var(--accent-tint); border-color: #cfe0d7; }
+  .badge.fail { background: var(--err-tint); border-color: #ecd2c9; }
+  .badge-info { display: flex; flex-direction: column; }
+  .badge-level { font-size: 13px; font-weight: 700; }
+  .badge-desc { font-size: 12px; color: var(--muted); }
+  .badge-result { font-size: 18px; font-weight: 700; }
+  .badge.pass .badge-result { color: var(--accent-dark); }
+  .badge.fail .badge-result { color: var(--err); }
+
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; padding: 12px 0 56px; }
+  @media (max-width: 640px) { .steps { grid-template-columns: 1fr; } }
+  .step { border-radius: 20px; padding: 24px; background: var(--card); border: 1px solid var(--border); text-align: center; }
+  .step-num { font-size: 22px; margin-bottom: 8px; color: var(--accent); font-weight: 700; }
+  .step-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .step-desc { font-size: 12px; line-height: 1.5; color: var(--muted); }
+
+  footer { padding: 24px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <div class="logo">QuickTools.hu</div>
+      <div class="back">&larr; <a href="/en/">All tools</a></div>
+    </nav>
+
+    <header class="hero">
+      <div class="icon-lg">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="#5b7f6f" stroke="none"/></svg>
+      </div>
+      <h1>Color Contrast Checker</h1>
+      <p class="sub">Pick a text and background color — instantly get the WCAG contrast ratio, and whether it passes AA/AAA.</p>
+    </header>
+
+    <div class="panel">
+      <div class="color-row">
+        <label>Text color</label>
+        <div class="color-input-group">
+          <input type="color" id="fg-picker" value="#2b2e2c">
+          <input type="text" id="fg-hex" value="#2b2e2c" maxlength="7" spellcheck="false">
+        </div>
+      </div>
+      <button class="swap-btn" id="swap-btn" type="button" title="Swap colors">⇅</button>
+      <div class="color-row">
+        <label>Background color</label>
+        <div class="color-input-group">
+          <input type="color" id="bg-picker" value="#f9f8f5">
+          <input type="text" id="bg-hex" value="#f9f8f5" maxlength="7" spellcheck="false">
+        </div>
+      </div>
+    </div>
+
+    <div class="preview" id="preview">
+      <p class="preview-large">Large text sample</p>
+      <p class="preview-normal">Normal-sized text in a full sentence, so you can see in practice how readable this color pair is.</p>
+    </div>
+
+    <div class="ratio-box">
+      <div class="ratio-value" id="ratio-value">1.00 : 1</div>
+      <div class="ratio-label">WCAG contrast ratio</div>
+      <div class="ratio-hint" id="ratio-hint">Invalid color — use a 3- or 6-digit hex code (e.g. #333 or #333333).</div>
+    </div>
+
+    <div class="badges">
+      <div class="badge" id="badge-aa-normal">
+        <div class="badge-info"><span class="badge-level">AA — Normal text</span><span class="badge-desc">Minimum 4.5 : 1</span></div>
+        <span class="badge-result"></span>
+      </div>
+      <div class="badge" id="badge-aa-large">
+        <div class="badge-info"><span class="badge-level">AA — Large text</span><span class="badge-desc">Minimum 3 : 1</span></div>
+        <span class="badge-result"></span>
+      </div>
+      <div class="badge" id="badge-aaa-normal">
+        <div class="badge-info"><span class="badge-level">AAA — Normal text</span><span class="badge-desc">Minimum 7 : 1</span></div>
+        <span class="badge-result"></span>
+      </div>
+      <div class="badge" id="badge-aaa-large">
+        <div class="badge-info"><span class="badge-level">AAA — Large text</span><span class="badge-desc">Minimum 4.5 : 1</span></div>
+        <span class="badge-result"></span>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Pick colors</div>
+        <div class="step-desc">Color picker or exact hex code for both colors.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Live preview</div>
+        <div class="step-desc">See instantly how the text looks on the background.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">WCAG result</div>
+        <div class="step-desc">Contrast ratio + AA/AAA compliance at a glance.</div>
+      </div>
+    </div>
+
+    <footer>
+      <div><a href="/en/privacy.html">Privacy Policy</a> &middot; <a href="/en/cookies.html">Cookie Policy</a></div>
+    </footer>
+  </div>
+
+  <script>
+    const fgPicker = document.getElementById('fg-picker');
+    const fgHex = document.getElementById('fg-hex');
+    const bgPicker = document.getElementById('bg-picker');
+    const bgHex = document.getElementById('bg-hex');
+    const swapBtn = document.getElementById('swap-btn');
+    const preview = document.getElementById('preview');
+    const ratioValue = document.getElementById('ratio-value');
+    const ratioHint = document.getElementById('ratio-hint');
+
+    const badges = {
+      aaNormal: { el: document.getElementById('badge-aa-normal'), min: 4.5 },
+      aaLarge: { el: document.getElementById('badge-aa-large'), min: 3 },
+      aaaNormal: { el: document.getElementById('badge-aaa-normal'), min: 7 },
+      aaaLarge: { el: document.getElementById('badge-aaa-large'), min: 4.5 },
+    };
+
+    function normalizeHex(raw) {
+      let h = raw.trim().replace(/^#/, '');
+      if (/^[0-9a-fA-F]{3}$/.test(h)) h = h.split('').map((c) => c + c).join('');
+      if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+      return '#' + h.toLowerCase();
+    }
+
+    function hexToRgb(hex) {
+      const num = parseInt(hex.slice(1), 16);
+      return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+    }
+
+    function relLuminance({ r, g, b }) {
+      const [rs, gs, bs] = [r, g, b].map((c) => {
+        c /= 255;
+        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+    }
+
+    function contrastRatio(hex1, hex2) {
+      const l1 = relLuminance(hexToRgb(hex1));
+      const l2 = relLuminance(hexToRgb(hex2));
+      const lighter = Math.max(l1, l2);
+      const darker = Math.min(l1, l2);
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    function setBadge(badge, pass) {
+      badge.el.classList.toggle('pass', pass);
+      badge.el.classList.toggle('fail', !pass);
+      badge.el.querySelector('.badge-result').textContent = pass ? '✓ Passes' : '✗ Fails';
+    }
+
+    function update() {
+      const fg = normalizeHex(fgHex.value);
+      const bg = normalizeHex(bgHex.value);
+
+      if (!fg || !bg) {
+        ratioHint.classList.add('show');
+        return;
+      }
+      ratioHint.classList.remove('show');
+
+      if (fgPicker.value.toLowerCase() !== fg) fgPicker.value = fg;
+      if (bgPicker.value.toLowerCase() !== bg) bgPicker.value = bg;
+
+      preview.style.color = fg;
+      preview.style.backgroundColor = bg;
+
+      const ratio = contrastRatio(fg, bg);
+      ratioValue.textContent = ratio.toFixed(2) + ' : 1';
+
+      setBadge(badges.aaNormal, ratio >= badges.aaNormal.min);
+      setBadge(badges.aaLarge, ratio >= badges.aaLarge.min);
+      setBadge(badges.aaaNormal, ratio >= badges.aaaNormal.min);
+      setBadge(badges.aaaLarge, ratio >= badges.aaaLarge.min);
+    }
+
+    fgPicker.addEventListener('input', () => { fgHex.value = fgPicker.value; update(); });
+    bgPicker.addEventListener('input', () => { bgHex.value = bgPicker.value; update(); });
+    fgHex.addEventListener('input', update);
+    bgHex.addEventListener('input', update);
+
+    swapBtn.addEventListener('click', () => {
+      const tmp = fgHex.value;
+      fgHex.value = bgHex.value;
+      bgHex.value = tmp;
+      update();
+    });
+
+    update();
+  </script>
+</body>
+</html>
