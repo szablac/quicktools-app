@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Termékfotó Optimalizáló – QuickTools.hu</title>
+<meta name="description" content="Töltsd fel a termékfotódat — fehér háttér, finom árnyék, középre igazítás, 1200×1200, WebP export egy kattintással.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --bg: #f9f8f5; --card: #ffffff; --card-muted: #f2f0eb; --border: #ece9e2;
+    --text: #2b2e2c; --muted: #6b6f6a; --accent: #5b7f6f; --accent-dark: #46655a; --accent-tint: #e9efe9;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 32px; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 32px 0; }
+  .logo { font-weight: 700; font-size: 19px; }
+  .back { font-size: 14px; color: var(--muted); }
+  header.hero { padding: 8px 0 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .icon-lg { width: 56px; height: 56px; border-radius: 18px; background: var(--accent-tint); display: flex; align-items: center; justify-content: center; }
+  h1 { margin: 0; font-size: 30px; font-weight: 700; }
+  .sub { margin: 0; font-size: 15px; line-height: 1.7; color: var(--muted); max-width: 500px; }
+
+  .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; align-items: start; }
+  @media (max-width: 760px) { .panes { grid-template-columns: 1fr; } }
+
+  .dropzone { border: 2px dashed #d8d4c9; border-radius: 24px; padding: 40px 24px; text-align: center; background: var(--card); transition: border-color .15s, background .15s; cursor: pointer; }
+  .dropzone.dragover, .dropzone:hover { border-color: var(--accent); background: #f5f8f6; }
+  .dropzone input { display: none; }
+  .dz-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .dz-hint { font-size: 12px; color: var(--muted); }
+
+  .preview-wrap { border-radius: 24px; border: 1px solid var(--border); background: var(--card); padding: 16px; }
+  .preview-frame { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 16px; overflow: hidden; background: repeating-conic-gradient(#f2f0eb 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
+  canvas { width: 100%; height: 100%; display: block; }
+  .preview-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; text-align: center; padding: 24px; }
+
+  .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 40px; flex-wrap: wrap; }
+  .btn { padding: 12px 26px; border-radius: 100px; border: none; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(91,127,111,0.3); }
+  .btn-primary:disabled { background: #c7c2b5; cursor: not-allowed; }
+  .status { font-size: 13px; color: var(--muted); }
+  .status.ok { color: var(--accent-dark); font-weight: 600; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; padding: 12px 0 56px; }
+  @media (max-width: 640px) { .steps { grid-template-columns: 1fr; } }
+  .step { border-radius: 20px; padding: 24px; background: var(--card); border: 1px solid var(--border); text-align: center; }
+  .step-num { font-size: 22px; margin-bottom: 8px; color: var(--accent); font-weight: 700; }
+  .step-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .step-desc { font-size: 12px; line-height: 1.5; color: var(--muted); }
+
+  footer { padding: 24px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <div class="logo">QuickTools.hu</div>
+      <div class="back">&larr; <a href="/">Összes eszköz</a></div>
+    </nav>
+
+    <header class="hero">
+      <div class="icon-lg">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </div>
+      <h1>Termékfotó Optimalizáló</h1>
+      <p class="sub">Töltsd fel a termékfotódat — fehér háttér, finom árnyék, középre igazítás, 1200×1200 méret, automatikus WebP-tömörítés. Nem háttéreltávolító: a meglévő hátteret nem vágja ki.</p>
+    </header>
+
+    <div class="panes">
+      <label class="dropzone" id="dropzone" for="image-input">
+        <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp,image/gif" required>
+        <div class="dz-title">Húzd ide a fotót, vagy kattints a kiválasztáshoz</div>
+        <div class="dz-hint">PNG · JPEG · WEBP · GIF</div>
+      </label>
+      <div class="preview-wrap">
+        <div class="preview-frame">
+          <canvas id="preview-canvas" width="1200" height="1200" style="display:none"></canvas>
+          <div class="preview-empty" id="preview-empty">Az 1200×1200-as előnézet itt jelenik meg.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="download-btn" disabled>Letöltés (WebP)</button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Feltöltés</div>
+        <div class="step-desc">Bármilyen termékfotó, akár átlátszó háttérrel.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Automatikus igazítás</div>
+        <div class="step-desc">Fehér háttér, finom árnyék, középre igazítás, 1200×1200.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Letöltés</div>
+        <div class="step-desc">Kész, tömörített WebP fájl — Etsy, Vatera, Jófogás-kompatibilis.</div>
+      </div>
+    </div>
+
+    <footer>
+      <div><a href="/adatvedelem.html">Adatvédelmi tájékoztató</a> &middot; <a href="/sutik.html">Cookie szabályzat</a></div>
+    </footer>
+  </div>
+
+  <script>
+    const input = document.getElementById('image-input');
+    const dropzone = document.getElementById('dropzone');
+    const canvas = document.getElementById('preview-canvas');
+    const emptyState = document.getElementById('preview-empty');
+    const downloadBtn = document.getElementById('download-btn');
+    const status = document.getElementById('status');
+    const ctx = canvas.getContext('2d');
+
+    let webpSupported = null;
+    function checkWebpSupport() {
+      if (webpSupported !== null) return webpSupported;
+      webpSupported = canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+      return webpSupported;
+    }
+
+    function processFile(file) {
+      if (!file) return;
+      status.textContent = 'Feldolgozás…';
+      status.className = 'status';
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        canvas.width = 1200;
+        canvas.height = 1200;
+        ctx.clearRect(0, 0, 1200, 1200);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 1200, 1200);
+
+        const maxDim = 1000;
+        const scale = Math.min(maxDim / img.width, maxDim / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        const x = (1200 - w) / 2;
+        const y = (1200 - h) / 2;
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(30, 30, 20, 0.22)';
+        ctx.shadowBlur = 46;
+        ctx.shadowOffsetY = 20;
+        ctx.drawImage(img, x, y, w, h);
+        ctx.restore();
+
+        canvas.style.display = 'block';
+        emptyState.style.display = 'none';
+        downloadBtn.disabled = false;
+
+        const supported = checkWebpSupport();
+        status.textContent = supported ? 'Kész — letölthető WebP-ként.' : 'Kész — a böngésződ nem támogatja a WebP-t, PNG-ként tölthető le.';
+        status.className = 'status ok';
+
+        URL.revokeObjectURL(objectUrl);
+      };
+      img.onerror = () => {
+        status.textContent = 'Nem sikerült beolvasni a képet.';
+        status.className = 'status';
+        URL.revokeObjectURL(objectUrl);
+      };
+      img.src = objectUrl;
+    }
+
+    input.addEventListener('change', () => processFile(input.files[0]));
+
+    ['dragover', 'dragenter'].forEach((evt) =>
+      dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); })
+    );
+    ['dragleave', 'drop'].forEach((evt) =>
+      dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); })
+    );
+    dropzone.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files.length) {
+        input.files = e.dataTransfer.files;
+        processFile(input.files[0]);
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const supported = checkWebpSupport();
+      const mime = supported ? 'image/webp' : 'image/png';
+      const ext = supported ? 'webp' : 'png';
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          status.textContent = 'A letöltés nem sikerült.';
+          status.className = 'status';
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'termekfoto-1200x1200.' + ext;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }, mime, 0.85);
+    });
+  </script>
+</body>
+</html>
