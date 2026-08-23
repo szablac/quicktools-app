@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS Gradient Builder – QuickTools.hu</title>
+<meta name="description" content="Állíts össze lineáris vagy sugárirányú színátmenetet tetszőleges számú színnel, és másold ki azonnal a CSS-t vagy a Tailwind osztályt.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #f9f8f5; --card: #ffffff; --card-muted: #f2f0eb; --border: #ece9e2;
+    --text: #2b2e2c; --muted: #6b6f6a; --accent: #5b7f6f; --accent-dark: #46655a; --accent-tint: #e9efe9;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 32px; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 32px 0; }
+  .logo { font-weight: 700; font-size: 19px; }
+  .back { font-size: 14px; color: var(--muted); }
+  header.hero { padding: 8px 0 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .icon-lg { width: 56px; height: 56px; border-radius: 18px; background: var(--accent-tint); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  h1 { margin: 0; font-size: 30px; font-weight: 700; }
+  .sub { margin: 0; font-size: 15px; line-height: 1.7; color: var(--muted); max-width: 500px; }
+
+  .preview { height: 220px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
+
+  .panel { border-radius: 20px; border: 1px solid var(--border); background: var(--card); padding: 24px; margin-bottom: 20px; }
+  .panel-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .panel-row:last-child { margin-bottom: 0; }
+
+  .type-toggle { display: inline-flex; border-radius: 100px; background: var(--card-muted); padding: 4px; }
+  .type-btn { border: none; background: transparent; font-family: inherit; font-weight: 700; font-size: 13px; padding: 9px 18px; border-radius: 100px; cursor: pointer; color: var(--muted); }
+  .type-btn.active { background: var(--accent); color: #fff; }
+
+  .angle-field { display: flex; align-items: center; gap: 10px; }
+  .angle-field label { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .angle-field input[type="range"] { width: 140px; accent-color: var(--accent); }
+  .angle-field input[type="number"] { width: 60px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-family: inherit; font-size: 13px; }
+
+  .stops-title { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .stop-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .stop-row .swatch-group { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 10px; padding: 5px 8px; background: var(--card-muted); }
+  .stop-row input[type="color"] { width: 28px; height: 28px; border: none; border-radius: 6px; padding: 0; cursor: pointer; background: none; }
+  .stop-row input[type="text"] { border: none; background: none; font-family: 'JetBrains Mono', monospace; font-size: 13px; width: 78px; outline: none; }
+  .stop-row .pos-field { display: flex; align-items: center; gap: 4px; }
+  .stop-row .pos-field input[type="number"] { width: 56px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-family: inherit; font-size: 13px; }
+  .stop-row .pos-field span { font-size: 12px; color: var(--muted); }
+  .stop-remove { margin-left: auto; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; }
+  .stop-remove:hover:not(:disabled) { border-color: #d99; color: #b5482f; }
+  .stop-remove:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .add-stop-btn { margin-top: 4px; font-size: 13px; font-weight: 700; color: var(--accent); background: none; border: none; cursor: pointer; padding: 0; }
+
+  .output { margin-bottom: 20px; }
+  .output-label { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .copy-link { font-weight: 600; color: var(--accent); cursor: pointer; text-transform: none; letter-spacing: normal; font-size: 12px; }
+  .code-box { border-radius: 14px; border: 1px solid var(--border); background: var(--card); padding: 14px 16px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); overflow-x: auto; white-space: pre; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; padding: 12px 0 56px; }
+  @media (max-width: 640px) { .steps { grid-template-columns: 1fr; } }
+  .step { border-radius: 20px; padding: 24px; background: var(--card); border: 1px solid var(--border); text-align: center; }
+  .step-num { font-size: 22px; margin-bottom: 8px; color: var(--accent); font-weight: 700; }
+  .step-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .step-desc { font-size: 12px; line-height: 1.5; color: var(--muted); }
+
+  footer { padding: 24px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <div class="logo">QuickTools.hu</div>
+      <div class="back">&larr; <a href="/">Összes eszköz</a></div>
+    </nav>
+
+    <header class="hero">
+      <div class="icon-lg">
+        <svg width="32" height="32" viewBox="0 0 24 24">
+          <defs><linearGradient id="gradIconDef" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5b7f6f"/><stop offset="100%" stop-color="#a9c2b6"/></linearGradient></defs>
+          <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#gradIconDef)"/>
+        </svg>
+      </div>
+      <h1>CSS Gradient Builder</h1>
+      <p class="sub">Állíts össze lineáris vagy sugárirányú színátmenetet tetszőleges számú színnel, és másold ki azonnal a CSS-t vagy a Tailwind osztályt.</p>
+    </header>
+
+    <div class="preview" id="preview"></div>
+
+    <div class="panel">
+      <div class="panel-row">
+        <div class="type-toggle">
+          <button class="type-btn active" id="type-linear" type="button">Lineáris</button>
+          <button class="type-btn" id="type-radial" type="button">Sugárirányú</button>
+        </div>
+        <div class="angle-field" id="angle-field">
+          <label>Szög</label>
+          <input type="range" id="angle-range" min="0" max="360" value="135">
+          <input type="number" id="angle-number" min="0" max="360" value="135">
+          <span>&deg;</span>
+        </div>
+      </div>
+
+      <div class="stops-title">Színek</div>
+      <div id="stops-list"></div>
+      <button class="add-stop-btn" id="add-stop-btn" type="button">+ Szín hozzáadása</button>
+    </div>
+
+    <div class="output">
+      <div class="output-label"><span>CSS</span><span class="copy-link" id="copy-css">Másolás</span></div>
+      <div class="code-box" id="css-output"></div>
+    </div>
+
+    <div class="output">
+      <div class="output-label"><span>Tailwind (arbitrary value)</span><span class="copy-link" id="copy-tw">Másolás</span></div>
+      <div class="code-box" id="tw-output"></div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Színek</div>
+        <div class="step-desc">Adj hozzá tetszőleges számú színt, pozícióval.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Beállítás</div>
+        <div class="step-desc">Lineáris (szöggel) vagy sugárirányú átmenet.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Másolás</div>
+        <div class="step-desc">Kész CSS vagy Tailwind osztály egy kattintással.</div>
+      </div>
+    </div>
+
+    <footer>
+      <div><a href="/adatvedelem.html">Adatvédelmi tájékoztató</a> &middot; <a href="/sutik.html">Cookie szabályzat</a></div>
+    </footer>
+  </div>
+
+  <script>
+    const preview = document.getElementById('preview');
+    const typeLinearBtn = document.getElementById('type-linear');
+    const typeRadialBtn = document.getElementById('type-radial');
+    const angleField = document.getElementById('angle-field');
+    const angleRange = document.getElementById('angle-range');
+    const angleNumber = document.getElementById('angle-number');
+    const stopsList = document.getElementById('stops-list');
+    const addStopBtn = document.getElementById('add-stop-btn');
+    const cssOutput = document.getElementById('css-output');
+    const twOutput = document.getElementById('tw-output');
+
+    let type = 'linear';
+    let angle = 135;
+    let stops = [
+      { id: 1, color: '#5b7f6f', position: 0 },
+      { id: 2, color: '#a9c2b6', position: 100 },
+    ];
+    let nextId = 3;
+
+    function normalizeHex(raw) {
+      let h = String(raw).trim().replace(/^#/, '');
+      if (/^[0-9a-fA-F]{3}$/.test(h)) h = h.split('').map((c) => c + c).join('');
+      if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+      return '#' + h.toLowerCase();
+    }
+
+    function sortedStops() {
+      return [...stops].sort((a, b) => a.position - b.position);
+    }
+
+    function gradientString(forTailwind) {
+      const sep = forTailwind ? ',' : ', ';
+      const stopStr = sortedStops()
+        .map((s) => forTailwind ? `${s.color}_${s.position}%` : `${s.color} ${s.position}%`)
+        .join(sep);
+      if (type === 'linear') {
+        return `linear-gradient(${angle}deg${sep}${stopStr})`;
+      }
+      return `radial-gradient(circle${sep}${stopStr})`;
+    }
+
+    function updateOutputs() {
+      const css = gradientString(false);
+      preview.style.background = css;
+      cssOutput.textContent = `background: ${css};`;
+      twOutput.textContent = `bg-[${gradientString(true)}]`;
+
+      typeLinearBtn.classList.toggle('active', type === 'linear');
+      typeRadialBtn.classList.toggle('active', type === 'radial');
+      angleField.style.display = type === 'linear' ? 'flex' : 'none';
+    }
+
+    // Csak akkor épül újra a színsorok DOM-ja, amikor a lista szerkezete változik
+    // (hozzáadás/eltávolítás) — húzáskor/gépeléskor SOSEM, mert az újraépítés bezárná
+    // a natív színválasztó felugró ablakát minden egérmozdulatnál.
+    function renderStopsList() {
+      stopsList.innerHTML = '';
+      stops.forEach((stop) => {
+        const row = document.createElement('div');
+        row.className = 'stop-row';
+        row.innerHTML = `
+          <div class="swatch-group">
+            <input type="color" value="${stop.color}">
+            <input type="text" value="${stop.color}" maxlength="7" spellcheck="false">
+          </div>
+          <div class="pos-field">
+            <input type="number" min="0" max="100" value="${stop.position}">
+            <span>%</span>
+          </div>
+          <button class="stop-remove" type="button" ${stops.length <= 2 ? 'disabled' : ''}>&times;</button>
+        `;
+        const [picker, hexInput] = row.querySelectorAll('input[type="color"], input[type="text"]');
+        const posInput = row.querySelector('input[type="number"]');
+        const removeBtn = row.querySelector('.stop-remove');
+
+        picker.addEventListener('input', () => {
+          stop.color = picker.value;
+          hexInput.value = picker.value;
+          updateOutputs();
+        });
+        hexInput.addEventListener('input', () => {
+          const hex = normalizeHex(hexInput.value);
+          if (!hex) return;
+          stop.color = hex;
+          picker.value = hex;
+          updateOutputs();
+        });
+        posInput.addEventListener('input', () => {
+          let v = Number(posInput.value);
+          if (Number.isNaN(v)) return;
+          v = Math.max(0, Math.min(100, v));
+          stop.position = v;
+          updateOutputs();
+        });
+        removeBtn.addEventListener('click', () => {
+          if (stops.length <= 2) return;
+          stops = stops.filter((s) => s.id !== stop.id);
+          renderStopsList();
+          updateOutputs();
+        });
+
+        stopsList.appendChild(row);
+      });
+    }
+
+    typeLinearBtn.addEventListener('click', () => { type = 'linear'; updateOutputs(); });
+    typeRadialBtn.addEventListener('click', () => { type = 'radial'; updateOutputs(); });
+
+    angleRange.addEventListener('input', () => { angle = Number(angleRange.value); angleNumber.value = angle; updateOutputs(); });
+    angleNumber.addEventListener('input', () => {
+      let v = Number(angleNumber.value);
+      if (Number.isNaN(v)) return;
+      v = Math.max(0, Math.min(360, v));
+      angle = v;
+      angleRange.value = v;
+      updateOutputs();
+    });
+
+    addStopBtn.addEventListener('click', () => {
+      if (stops.length >= 6) return;
+      const positions = stops.map((s) => s.position);
+      const mid = Math.round((Math.min(...positions) + Math.max(...positions)) / 2);
+      stops.push({ id: nextId++, color: '#ffffff', position: mid });
+      renderStopsList();
+      updateOutputs();
+    });
+
+    function copyText(text, linkEl) {
+      navigator.clipboard.writeText(text).then(() => {
+        const original = linkEl.textContent;
+        linkEl.textContent = 'Másolva!';
+        setTimeout(() => { linkEl.textContent = original; }, 1500);
+      });
+    }
+    document.getElementById('copy-css').addEventListener('click', (e) => copyText(cssOutput.textContent, e.target));
+    document.getElementById('copy-tw').addEventListener('click', (e) => copyText(twOutput.textContent, e.target));
+
+    renderStopsList();
+    updateOutputs();
+  </script>
+</body>
+</html>

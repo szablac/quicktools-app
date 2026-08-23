@@ -35,6 +35,7 @@
 | 9 | TOOL-004 | P2 | `DONE` | PDF Oldal Kiválasztó megvalósítva (teljesen kliens-oldali, `pdf-lib` + `pdfjs-dist` CDN-ről, megtartás/eltávolítás mód), élesben ellenőrizve (`/api/tools` listázza, HU+EN oldal 200-at ad) | PLAT-001 (kész) |
 | 10 | UX-001 | P2 | `DONE` | Feltöltő doboz (dropzone) egységes, beszédesebb megjelenítése mindhárom fájlfeltöltős toolban (Favicon Generator, Termékfotó Optimalizáló, PDF Oldal Kiválasztó): ikon + kiemelt "Fájl kiválasztása" gomb-szerű elem. Menet közben egy valódi CSS-hibát is feltárt és javított (ld. ADR-012), élesben igazolva. | TOOL-001, TOOL-003 (kész), TOOL-004 |
 | 11 | TOOL-005 | P2 | `DONE` | Színkontraszt Ellenőrző megvalósítva (teljesen kliens-oldali, WCAG relatív-luminancia képlet), a számítás ismert referenciaértékekkel (pl. #767676/fehér = 4.54:1) igazolva, élesben ellenőrizve (`/api/tools` listázza, HU+EN oldal 200-at ad) | PLAT-001 (kész) |
+| 12 | TOOL-006 | P2 | `VERIFY` | CSS Gradient Builder megvalósítva (teljesen kliens-oldali, lineáris/sugárirányú, tetszőleges számú színmegálló, CSS + Tailwind arbitrary-value export), böngészőben funkcionálisan igazolva (típusváltás, szög, hozzáadás/eltávolítás, érvénytelen hex kezelése); élesítés (migráció 009 + deploy) hátravan | PLAT-001 (kész) |
 
 ## Kiemelt feladatok elfogadási feltételei
 
@@ -90,3 +91,12 @@
 - [x] Kontrasztarány-számítás ismert referenciaértékekkel igazolva (fekete/fehér = 21:1, #767676/fehér = 4.54:1 — pontosan a WCAG AA határon)
 - [x] Pass/fail jelvények (AA/AAA × normál/nagy szöveg) helyesen váltanak a határértékeknél
 - [x] Érvénytelen hex-kód esetén hibajelzés jelenik meg, nem omlik össze
+
+### TOOL-006
+
+- [ ] `db/migrations/009_seed_css_gradient_builder.sql` lefuttatva phpMyAdmin-ban
+- [ ] `GET /api/tools` élesben tartalmazza a `css-gradient-builder` slugot
+- [ ] `css-gradient-builder.html` és `en/css-gradient-builder.html` élesben 200-at ad
+- [x] Lineáris/sugárirányú váltás, szög-módosítás, szín hozzáadása/eltávolítása (min. 2 szín) böngészőben igazolva
+- [x] CSS és Tailwind (arbitrary-value) kimenet pontos szintaxissal (pl. `bg-[linear-gradient(135deg,#5b7f6f_0%,#a9c2b6_100%)]`)
+- [x] Érvénytelen hex-kód a színmegállóknál figyelmen kívül van hagyva, nem omlik össze
