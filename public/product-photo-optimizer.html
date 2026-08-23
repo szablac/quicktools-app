@@ -46,7 +46,13 @@
   .preview-wrap { border-radius: 24px; border: 1px solid var(--border); background: var(--card); padding: 16px; }
   .preview-frame { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 16px; overflow: hidden; background: repeating-conic-gradient(#f2f0eb 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
   canvas { width: 100%; height: 100%; display: block; }
+  canvas.has-image { cursor: zoom-in; }
   .preview-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; text-align: center; padding: 24px; }
+
+  .lightbox { position: fixed; inset: 0; background: rgba(20, 20, 16, 0.85); display: none; align-items: center; justify-content: center; z-index: 1000; overflow: auto; cursor: zoom-out; padding: 40px; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: none; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .lightbox-hint { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 12px; opacity: 0.7; z-index: 1001; }
 
   .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 40px; flex-wrap: wrap; }
   .btn { padding: 12px 26px; border-radius: 100px; border: none; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
@@ -128,6 +134,11 @@
     <footer>
       <div><a href="/adatvedelem.html">Adatvédelmi tájékoztató</a> &middot; <a href="/sutik.html">Cookie szabályzat</a></div>
     </footer>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-hint">Kattints vagy nyomj Esc-et a bezáráshoz</div>
+    <img id="lightbox-img" alt="Termékfotó 100%-os méretben">
   </div>
 
   <script>
@@ -214,6 +225,7 @@
         await drawToCanvas(sourceBlob);
 
         canvas.style.display = 'block';
+        canvas.classList.add('has-image');
         emptyState.style.display = 'none';
         downloadBtn.disabled = false;
 
@@ -225,6 +237,23 @@
         status.className = 'status';
       }
     }
+
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+
+    function openLightbox() {
+      if (!canvas.classList.contains('has-image')) return;
+      lightboxImg.src = canvas.toDataURL('image/png');
+      lightbox.classList.add('open');
+    }
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+    }
+    canvas.addEventListener('click', openLightbox);
+    lightbox.addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLightbox();
+    });
 
     input.addEventListener('change', () => processFile(input.files[0]));
 
