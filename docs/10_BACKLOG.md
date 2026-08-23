@@ -37,7 +37,7 @@
 | 11 | TOOL-005 | P2 | `DONE` | Színkontraszt Ellenőrző megvalósítva (teljesen kliens-oldali, WCAG relatív-luminancia képlet), a számítás ismert referenciaértékekkel (pl. #767676/fehér = 4.54:1) igazolva, élesben ellenőrizve (`/api/tools` listázza, HU+EN oldal 200-at ad) | PLAT-001 (kész) |
 | 12 | TOOL-006 | P2 | `DONE` | CSS Gradient Builder megvalósítva (teljesen kliens-oldali, lineáris/sugárirányú, tetszőleges számú színmegálló, CSS + Tailwind arbitrary-value export), élesben ellenőrizve (`/api/tools` listázza, HU+EN oldal 200-at ad) | PLAT-001 (kész) |
 | 13 | UX-002 | P2 | `DONE` | Főoldal tool-kártyák: minden kártya a saját tool egyedi hero-ikonját mutatja a generikus placeholder helyett (`TOOL_ICONS` slug→SVG leképezés, ismeretlen slugra a régi generikus ikonra esik vissza), élesben ellenőrizve | TOOL-001..006 |
-| 14 | I18N-001 | P2 | `VERIFY` | Nyelvi útvonalválasztás IP-alapú országfelismeréssel (`geoip-lite`, ADR-014): magyar IP → magyar kezdőoldal, külföldi → `/en/`, `qt_lang` süti emlékszik a választásra. Csak a gyökér (`/`) útvonalra vonatkozik. Adatvédelmi/cookie szabályzat frissítve. Négy eset (van cookie / magyar IP / külföldi IP / ismeretlen IP) node-ban mock kérésekkel igazolva; élesítés hátravan | – |
+| 14 | I18N-001 | P2 | `DONE` | Nyelvi útvonalválasztás IP-alapú országfelismeréssel (`geoip-lite`, ADR-014): magyar IP → magyar kezdőoldal, külföldi → `/en/`, `qt_lang` süti emlékszik a választásra. Csak a gyökér (`/`) útvonalra vonatkozik. Adatvédelmi/cookie szabályzat frissítve. Élesben `curl`-lal igazolva mind a 3 fő eset (külföldi/magyar/már döntött) | – |
 
 ## Kiemelt feladatok elfogadási feltételei
 
@@ -109,5 +109,5 @@
 - [x] Ismert külföldi IP-tartományokra (US, AU, DE, SK) a döntési logika angol átirányítást választ (node-teszt)
 - [x] Ismeretlen/helyi IP-re a magyar oldal marad az alapértelmezett
 - [x] Már beállított `qt_lang` süti esetén nincs újra-átirányítás, sem újra-cookie-állítás (mock kérésekkel igazolva)
-- [ ] `db/migrations`-t nem igényel; élesben ellenőrizendő: valódi böngészőből/`curl`-lal a redirect + `Set-Cookie` viselkedés
+- [x] `db/migrations`-t nem igényel; élesben `curl`-lal igazolva a redirect + `Set-Cookie` viselkedés (külföldi/magyar/már döntött eset)
 - [x] `adatvedelem.html`/`en/privacy.html` és `sutik.html`/`en/cookies.html` frissítve a `qt_lang` süti és az IP-alapú döntés feltüntetésével

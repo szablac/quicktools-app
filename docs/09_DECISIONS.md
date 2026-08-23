@@ -122,7 +122,7 @@
 
 ### ADR-014 – Nyelvi útvonalválasztás IP-alapú országfelismeréssel
 
-- Állapot: **JAVASOLT** (commit jóváhagyásra vár)
+- Állapot: **ELFOGADOTT**
 - Dátum: 2026-08-23
 - Döntés: a `GET /`-re érkező kérésnél a `geoip-lite` (Apache-2.0, helyben futó, MaxMind GeoLite2-alapú, **nincs külső API-hívás**) csomaggal megnézzük a látogató IP-címéből az országkódot. Ha nem `HU`, 302-es átirányítás `/en/`-re. Az eredményt (nem az IP-címet) egy `qt_lang` sütiben (1 év) jegyezzük meg, hogy (a) ne fusson le a lekérdezés minden egyes kérésnél, és (b) a felhasználó kézi nyelvválasztása/vissza-navigálása felülírja az automatikus döntést, ne írja azt felül folyamatosan.
 - Indok: a felhasználó kérése — magyar IP-ről a magyar, külföldiről az angol kezdőoldal töltődjön be.
@@ -130,4 +130,4 @@
 - **Miért helyi könyvtár, nem külső geolokációs API**: nincs hálózati függőség/late­ncia, nincs harmadik félnek elküldött látogatói IP-cím, nincs API-kulcs/költség. Cserébe a `geoip-lite` beépített adatbázisa csak a csomag frissítésével (`npm update`) frissül — **tudatosan vállalt kockázat**: országszinten ritkán, de előfordulhat elavult/pontatlan besorolás egy-egy újonnan kiosztott IP-tartományra.
 - **Ismeretlen/fel nem ismerhető IP** (pl. helyi teszt, privát tartomány) esetén a magyar oldal marad az alapértelmezett — a célközönség elsődlegesen magyar (`docs/01_PROJECT_FOUNDATIONS.md`), ezért a biztonságosabb feltételezés a hazai nyelv.
 - **Adatvédelmi vonatkozás**: az IP-címet a döntéshez átmenetileg használjuk, nem tároljuk; a sütibe csak a nyelvi eredmény kerül. `adatvedelem.html`/`en/privacy.html` és `sutik.html`/`en/cookies.html` frissítve ennek megfelelően (a `qt_lang` mint technikailag elengedhetetlen süti feltüntetve, hozzájárulás nélkül is jogszerű).
-- Ellenőrzés: a döntési logikát (cookie már van / magyar IP / külföldi IP / ismeretlen IP, mind a négy eset) mock kérés-válasz objektumokkal, valamint a `geoip-lite` országfelismerését több ismert magyar és külföldi IP-tartománnyal (HU, US, AU, DE, SK) node-ban igazoltuk.
+- Ellenőrzés: a döntési logikát (cookie már van / magyar IP / külföldi IP / ismeretlen IP, mind a négy eset) mock kérés-válasz objektumokkal, valamint a `geoip-lite` országfelismerését több ismert magyar és külföldi IP-tartománnyal (HU, US, AU, DE, SK) node-ban igazoltuk. Élesben is igazolva `curl`-lal (`X-Forwarded-For` fejléc szimulációval): külföldi IP → 302 + `qt_lang=en`; magyar IP → 200 + `qt_lang=hu`; meglévő `qt_lang=hu` süti mellett külföldi IP → 200, nincs új átirányítás/süti-felülírás.
