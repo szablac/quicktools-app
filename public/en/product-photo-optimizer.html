@@ -73,8 +73,8 @@
     <div class="panes">
       <label class="dropzone" id="dropzone" for="image-input">
         <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp,image/gif" required>
-        <div class="dz-title">Drag your photo here, or click to choose</div>
-        <div class="dz-hint">PNG · JPEG · WEBP · GIF</div>
+        <div class="dz-title">Drag your photo here, click to choose, or paste (Ctrl+V)</div>
+        <div class="dz-hint">PNG · JPEG · WEBP · GIF · pasted screenshots work too</div>
       </label>
       <div class="preview-wrap">
         <div class="preview-frame">
@@ -185,6 +185,20 @@
       if (e.dataTransfer.files.length) {
         input.files = e.dataTransfer.files;
         processFile(input.files[0]);
+      }
+    });
+
+    window.addEventListener('paste', (e) => {
+      const items = (e.clipboardData && e.clipboardData.items) || [];
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            processFile(file);
+            e.preventDefault();
+          }
+          break;
+        }
       }
     });
 
