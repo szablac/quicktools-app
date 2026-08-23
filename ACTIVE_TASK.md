@@ -7,7 +7,7 @@
 | Mező | Érték |
 |---|---|
 | Fázis | 1 – Platform-váz + TOOL-001 KÉSZ; vizuális design (ADR-008, Soft Calm) élesben |
-| Aktív feladat | – (TOOL-003 Termékfotó Optimalizáló lezárva, élesben ellenőrizve) |
+| Aktív feladat | – (MON-001 fiók-profil kész, Google belső felülvizsgálatára vár; MON-002 elhalasztva, ld. indoklás) |
 | Állapot | Claude Design canvasban 7 irány (3 techno, elvetve + 3 modern + 1 hibrid) bemutatva; felhasználó az **F — Soft Calm** irányt választotta; beépítve az élő oldalba, ellenőrizve |
 | Kiemelt következő feladat | Nincs kijelölt aktív tétel — döntés kell: következő tool, vagy OPS-001 (cache-stratégia), vagy MON-001/002 (AdSense) |
 | Aktuális kódmódosítás | – (minden pusholva és deployolva) |
