@@ -24,7 +24,7 @@
 |---:|---|---|---|---|---|
 | 0 | INFRA-001 | P0 | `DONE` | Aldomain + adatbázis + Node.js App + git deploy pipeline felállítása | – |
 | 1 | PROD-001 | P1 | `DONE` | Monetizációs modell pontosítása → átmeneti döntés: Google AdSense (ADR-007) | – |
-| 2 | MON-001 | P1 | `VERIFY` | Google AdSense fiók regisztrálva (`qwer.hu` alá, `ads.txt`-vel igazolva), fiók-profil (fizetési cím, telefonszám) kész, webhely csatlakoztatva — Google belső felülvizsgálatára vár | landing oldal + adatvédelmi tájékoztató (kész) |
+| 2 | MON-001 | P1 | `VERIFY` | Google AdSense: fiók + `ads.txt` kész, hirdetéskód (`adsbygoogle.js`, `ca-pub-2290062414680227`) beépítve mind a 18 HU/EN oldalra (ADR-017), GDPR consent-üzenet (Funding Choices, "Európai szabályozások") közzétéve HU+EN nyelven, elutasítás-gombbal. Élesítés (deploy) hátravan, utána Google felülvizsgálatára vár. | landing oldal + adatvédelmi tájékoztató (kész) |
 | 3 | MON-002 | P2 | `DEFERRED` | ~~`quicktools.qwer.hu` külön webhelyként~~ — kiderült, hogy ez az AdSense-felület **domain-szinten**, nem aldomain-szinten kezeli a „Webhelyek" listát (`qwer.hu` az egyetlen sor, a `quicktools.qwer.hu` automatikusan alá tartozik, önálló hozzáadása nem lehetséges). Ha a bevétel-jelentés aldomain-bontása mégis fontossá válik, a Jelentések (Reports) oldal URL-szűrését kell megnézni. | – |
 | 3 | PLAT-001 | P1 | `DONE` | Tool-regisztrációs keret: `tools` tábla + `GET /api/tools` végpont (fiók/előfizetés elhalasztva, DR-001) | roadmap Fázis 1 |
 | 4 | TOOL-001 | P2 | `DONE` | Favicon Generator megvalósítva (backend + HU/EN frontend), élesben ellenőrizve (feltöltés → ZIP-letöltés működik) | PLAT-001 (kész) |
