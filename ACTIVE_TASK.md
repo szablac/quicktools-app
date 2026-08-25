@@ -6,36 +6,40 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz + TOOL-001..006 KÉSZ; PROD-002, OPS-001, UX-001, UX-002, I18N-001, SEO-001 KÉSZ |
-| Aktív feladat | – (nincs kijelölt aktív tétel) |
-| Állapot | `robots.txt` és dinamikus `sitemap.xml` élesben igazolva (18 URL, helyes hreflang-párosítás); `canonical`/`hreflang` címkék mind a 9 HU/EN oldalpáron élnek |
-| Kiemelt következő feladat | Döntés kell: következő tool, vagy MON-001/002 (AdSense) folytatása |
-| Aktuális kódmódosítás | – (minden pusholva és deployolva: `4701cb9`) |
+| Fázis | 1 – Platform-váz + TOOL-001..006 KÉSZ; PROD-002, OPS-001, UX-001, UX-002, I18N-001, SEO-001 KÉSZ; OPS-002 (SSH deploy-eszközök) kódja/szerver-oldali beállítása kész, tényleges deploy-teszt hátravan |
+| Aktív feladat | OPS-002 — `scripts/deploy.sh` commit/push jóváhagyásra vár, utána egy próba-futtatás |
+| Állapot | Shell-hozzáférés engedélyezve a fiókon (ADR-006 felülbírálva). `scripts/deploy.sh` megírva és helyben szintaktikailag ellenőrizve (`bash -n`). `~/.my.cnf` **már létrehozva a szerveren** (chmod 600), `mysql -e "SELECT 1"` jelszó nélkül működik — migrációk mostantól `mysql < db/migrations/0XX_nev.sql` paranccsal futtathatók. |
+| Kiemelt következő feladat | `scripts/deploy.sh` commit + push jóváhagyása, utána egy tényleges próba-futtatás SSH-n keresztül, hogy lássuk, működik-e élesben |
+| Aktuális kódmódosítás | `scripts/deploy.sh` (új), `docs/09_DECISIONS.md` (ADR-016), `docs/10_BACKLOG.md` — helyben, még nincs commitolva |
 | Blokkoló | – (Google AdSense felülvizsgálat, MON-001, a háttérben fut, nem blokkol) |
-| Utolsó tartós döntés | ADR-015 (2026-08-23, `ELFOGADOTT`) — dinamikus sitemap + canonical/hreflang minden oldalpáron |
+| Utolsó tartós döntés | ADR-016 (2026-08-23, `ELFOGADOTT`) — SSH-alapú deploy-szkript + `.my.cnf`, fokozatos átállás, migráció tudatosan nem automatizált |
 
 ## Következő pontos lépések
 
-1. Döntés kell a felhasználótól: következő tool, vagy MON-001/MON-002 (AdSense-folytatás).
-2. Amint a Google AdSense dönt, a hirdetéskód beillesztése (MON-001).
-3. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — a 3 modern irány (E/F/G) referenciaként megmarad, ha később újragondoljuk a designt.
+1. Commit + push jóváhagyása a `scripts/deploy.sh`-ra és a dokumentációra.
+2. Miután a szerveren is lehúzta git (a szkript maga csinálja ezt, de az *első* futtatáshoz kézzel kell egyszer `git pull`-olni, hogy maga a szkript-fájl megjelenjen a szerveren) — utána tesztfuttatás: `ssh szablac@185.75.192.93 'bash ~/quicktools.qwer.hu/scripts/deploy.sh'`.
+3. Ha működik: ez lesz az elsődleges (gyorsabb) deploy-mód a jövőben, a cPanel GUI-s módszer tartalék marad.
+4. **Biztonsági megjegyzés még nyitva**: a `.htaccess` SSH-s megtekintésekor egyszer megjelent az éles DB-jelszó a beszélgetésben (dokumentálva ADR-016-ban). A felhasználó mérlegelheti a jelszócserét a cPanel felületén — nem sürgős, saját helyi munkameneten belüli megjelenés volt.
+5. **Beerbelly-project**: a felhasználó jelezte, hogy a `beerbelly.qwer.hu` projekthez is kellene SSH-hozzáférés — ugyanaz a kulcs működni fog (azonos hosting-fiók), de ezt a projekt saját munkamenetében kell átbeszélni, nem itt.
+6. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — referenciaként megmarad.
 
 > Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
-> Megjegyzés: a `temp_files/` mappában (gitignore-olt) még mindig van két érintetlen, érzékeny fájl (`db`, `github token`) — nem relevánsak jelenleg. A titkos SSH-kulcs (`~/.ssh/id_rsa_qwer`) megtartásáról/törléséről még nem született döntés — jelenleg nincs gyakorlati haszna, mivel a shell le van tiltva a fiókon.
+> Megjegyzés: a `temp_files/` mappában (gitignore-olt) még mindig van két érintetlen, érzékeny fájl (`db`, `github token`) — nem relevánsak jelenleg.
 
 ## Legutóbbi interakciók
 
-- **SSH-vizsgálat lezárva**: a cPanel-generált SSH-kulcs hitelesítése sikeres, de a szerver megerősítette, hogy a shell-hozzáférés le van tiltva a fiókon. ADR-006 véglegesítve.
-- **SEO-001 implementáció**: `robots.txt`, dinamikus `GET /sitemap.xml` (a `tools` táblából), `canonical`+`hreflang` címkék mind a 9 HU/EN oldalpáron (18 fájl). Node.js-ben és `grep`-pel előzetesen igazolva (ADR-015).
-- **Élő igazolás + lezárás**: commit `4701cb9`, push, cPanel Pull+Restart (migráció nem kellett). `curl`-lal igazolva: `/robots.txt` és `/sitemap.xml` 200-at ad, a sitemap 18 helyes URL-t tartalmaz (beleértve az eltérő fájlnevű `adatvedelem.html`↔`en/privacy.html` párost is), a `canonical` címke jelen van egy mintaoldalon. SEO-001 lezárva `DONE`-ra.
+- **SSH shell-hozzáférés véglegesen engedélyezve**: több kör próbálkozás és support-visszajelzés után a felhasználó fiókján a shell-hozzáférés aktívvá vált — valódi bejelentkezés igazolva (`whoami`, `hostname`→`c3.elin.hu`). ADR-006 felülbírálva.
+- **Szerver-felmérés**: felmértem (csak olvasás jelleggel) a szervert — Node v22.23.2/npm 10.9.8 (nodevenv-aktiválás után), `mysql` kliens elérhető, Passenger `tmp/restart.txt`-tel újraindítható, a git checkout stimmel a legutóbbi push-sal. Menet közben véletlenül megjelent az éles DB-jelszó (a `.htaccess` tartalmazza a Node-env-változókat) — dokumentálva, nem ismételve, nem git alá kerülve.
+- **OPS-002 — deploy-eszközök**: a felhasználó jóváhagyására megírtam a `scripts/deploy.sh`-t (git pull + feltételes npm install + Passenger-restart, biztonsági fékkel az el nem mentett szerver-oldali módosítások ellen) és létrehoztam a `~/.my.cnf`-et a szerveren (jelszó nélküli `mysql` CLI-hitelesítéshez). A `.my.cnf` működését élőben igazoltam (`SELECT 1`). A `deploy.sh` még nincs commitolva/tesztelve élesben.
 
 ## Aktuális munkafájlok
 
-– (minden pusholva, deployolva és élesben igazolva)
+- `scripts/deploy.sh` – új, még nincs commitolva
+- `docs/09_DECISIONS.md` – ADR-016 hozzáadva
 
 ## Ellenőrzési állapot
 
-- `https://quicktools.qwer.hu/robots.txt` és `.../sitemap.xml` 200-at ad, curl-lal igazolva.
-- A sitemap 18 `<loc>` bejegyzést tartalmaz, ellenőrizve a helyes tartalommal.
-- A `canonical` címke élesben igazolva egy mintaoldalon (`css-gradient-builder.html`).
+- `bash -n scripts/deploy.sh`: szintaktikailag hibátlan.
+- A szerveren: `ls -la ~/.my.cnf` → `-rw-------` (600), `mysql -e "SELECT 1"` sikeresen lefutott jelszó nélkül.
+- **Még nincs ellenőrizve**: maga a `deploy.sh` tényleges futtatása élesben.
