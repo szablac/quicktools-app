@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nyomtatható PDF Készítő – QuickTools.hu</title>
+<meta name="description" content="Állíts össze egy nyomtatható PDF-et képekből és szövegből (Markdown-formázással) — A4 vagy A3 méretben, tetszőleges sorrendben.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<script type="importmap">
+{
+  "imports": {
+    "pdf-lib": "https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.esm.min.js"
+  }
+}
+</script>
+<!-- Az @pdf-lib/fontkit ESM buildja bundler-függő ("pako" bare import), ezért az önálló
+     (UMD) buildjét töltjük be sima <script>-ként — ez window.fontkit-et állítja be. -->
+<script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f9f8f5; --card: #ffffff; --card-muted: #f2f0eb; --border: #ece9e2;
+    --text: #2b2e2c; --muted: #6b6f6a; --accent: #5b7f6f; --accent-dark: #46655a; --accent-tint: #e9efe9;
+    --err: #b5482f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 32px; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 32px 0; }
+  .logo { font-weight: 700; font-size: 19px; }
+  .back { font-size: 14px; color: var(--muted); }
+  header.hero { padding: 8px 0 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .icon-lg { width: 56px; height: 56px; border-radius: 18px; background: var(--accent-tint); display: flex; align-items: center; justify-content: center; }
+  h1 { margin: 0; font-size: 30px; font-weight: 700; }
+  .sub { margin: 0; font-size: 15px; line-height: 1.7; color: var(--muted); max-width: 520px; }
+
+  .panel { border-radius: 20px; border: 1px solid var(--border); background: var(--card); padding: 24px; margin-bottom: 20px; }
+
+  .add-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .add-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 100px; border: 1.5px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer; background: none; font-family: inherit; }
+  .add-btn:hover { background: var(--accent-tint); }
+
+  .text-editor { margin-top: 16px; }
+  .text-editor textarea { width: 100%; height: 160px; resize: vertical; border-radius: 14px; border: 1px solid var(--border); background: var(--card-muted); color: var(--text); padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.55; outline: none; }
+  .text-editor textarea:focus { border-color: var(--accent); }
+  .text-editor-actions { display: flex; gap: 10px; margin-top: 10px; }
+
+  .queue-title { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .empty-hint { border-radius: 16px; border: 1px dashed var(--border); padding: 28px; text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+  .queue-row { display: flex; align-items: center; gap: 12px; border-radius: 14px; border: 1px solid var(--border); background: var(--card); padding: 10px 12px; margin-bottom: 10px; }
+  .queue-thumb { width: 48px; height: 48px; border-radius: 10px; background: var(--card-muted); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+  .queue-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .queue-info { flex: 1; min-width: 0; }
+  .queue-type { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+  .queue-snippet { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .queue-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .icon-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; }
+  .icon-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .icon-btn.remove:hover { border-color: #d99; color: var(--err); }
+
+  .type-toggle { display: inline-flex; border-radius: 100px; background: var(--card-muted); padding: 4px; }
+  .type-btn { border: none; background: transparent; font-family: inherit; font-weight: 700; font-size: 13px; padding: 9px 22px; border-radius: 100px; cursor: pointer; color: var(--muted); }
+  .type-btn.active { background: var(--accent); color: #fff; }
+
+  .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 40px; flex-wrap: wrap; }
+  .btn { padding: 12px 26px; border-radius: 100px; border: none; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(91,127,111,0.3); }
+  .btn-primary:disabled { background: #c7c2b5; cursor: not-allowed; }
+  .btn-ghost { background: var(--card-muted); color: var(--text); }
+  .btn-ghost:hover { background: var(--border); }
+  .status { font-size: 13px; color: var(--muted); }
+  .status.ok { color: var(--accent-dark); font-weight: 600; }
+  .status.err { color: var(--err); font-weight: 600; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; padding: 12px 0 56px; }
+  @media (max-width: 640px) { .steps { grid-template-columns: 1fr; } }
+  .step { border-radius: 20px; padding: 24px; background: var(--card); border: 1px solid var(--border); text-align: center; }
+  .step-num { font-size: 22px; margin-bottom: 8px; color: var(--accent); font-weight: 700; }
+  .step-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .step-desc { font-size: 12px; line-height: 1.5; color: var(--muted); }
+
+  footer { padding: 24px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+  input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <div class="logo">QuickTools.hu</div>
+      <div class="back">&larr; <a href="/">Összes eszköz</a></div>
+    </nav>
+
+    <header class="hero">
+      <div class="icon-lg">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b7f6f" stroke-width="1.7"><path d="M8 3H6a2 2 0 00-2 2v14a2 2 0 002 2h9a2 2 0 002-2v-9l-6-7z"/><path d="M14 3v6h6"/><path d="M8 13h5M8 16h5"/></svg>
+      </div>
+      <h1>Nyomtatható PDF Készítő</h1>
+      <p class="sub">Adj hozzá képeket és szöveget tetszőleges sorrendben, és készíts belőlük egyetlen, nyomtatásra kész PDF-et — A4 vagy A3 méretben.</p>
+    </header>
+
+    <div class="panel">
+      <div class="add-row">
+        <label class="add-btn" for="image-input">+ Kép hozzáadása</label>
+        <input type="file" id="image-input" accept="image/*" multiple>
+        <button class="add-btn" id="add-text-btn" type="button">+ Szöveg hozzáadása</button>
+        <label class="add-btn" for="file-text-input">+ .txt / .md fájl</label>
+        <input type="file" id="file-text-input" accept=".txt,.md,text/plain,text/markdown">
+      </div>
+      <div class="text-editor" id="text-editor" style="display:none">
+        <textarea id="text-input" placeholder="Írd vagy illeszd be a szöveget… # Címsor, ## Alcím, - listaelem, **félkövér** formázás használható."></textarea>
+        <div class="text-editor-actions">
+          <button class="btn btn-primary" id="confirm-text-btn" type="button">Hozzáadás a listához</button>
+          <button class="btn btn-ghost" id="cancel-text-btn" type="button">Mégse</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="queue-title">Oldalak sorrendje</div>
+    <div class="empty-hint" id="empty-hint">Még nincs hozzáadott elem — adj hozzá képet vagy szöveget fent.</div>
+    <div id="queue-list"></div>
+
+    <div class="panel">
+      <div class="queue-title">Lapméret</div>
+      <div class="type-toggle">
+        <button class="type-btn active" id="size-a4" type="button">A4</button>
+        <button class="type-btn" id="size-a3" type="button">A3</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="generate-btn" disabled>PDF letöltése</button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Hozzáadás</div>
+        <div class="step-desc">Képek és szövegblokkok tetszőleges keveréke.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Sorrend</div>
+        <div class="step-desc">Nyilakkal rendezheted, melyik legyen előbb.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Letöltés</div>
+        <div class="step-desc">Egyetlen, A4/A3 méretű, nyomtatható PDF.</div>
+      </div>
+    </div>
+
+    <footer>
+      <div><a href="/adatvedelem.html">Adatvédelmi tájékoztató</a> &middot; <a href="/sutik.html">Cookie szabályzat</a></div>
+    </footer>
+  </div>
+
+  <script type="module">
+    import { PDFDocument, PageSizes, rgb } from 'pdf-lib';
+    const fontkit = window.fontkit;
+
+    // A szabványos PDF-betűtípusok (Helvetica stb.) csak WinAnsi kódolást ismernek, ami NEM
+    // tartalmazza a magyar hosszú ékezetes betűket (ő, ű) — ezért egy tényleges Unicode
+    // betűtípust ágyazunk be helyettük. Csak egyetlen (Regular) súlya érhető el statikus
+    // fájlként a Google Fonts jelenlegi (variábilis fontos) kiadásában, ezért a "félkövér"
+    // Markdown-jelölés jelenleg csak a csillagok eltávolítására szolgál, vizuálisan nem lesz
+    // vastagabb a szöveg — ez egy tudatosan vállalt egyszerűsítés (ld. ADR).
+    const UNICODE_FONT_URL = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosans/NotoSans%5Bwdth%2Cwght%5D.ttf';
+    let cachedFontBytes = null;
+    async function getUnicodeFontBytes() {
+      if (cachedFontBytes) return cachedFontBytes;
+      const resp = await fetch(UNICODE_FONT_URL);
+      if (!resp.ok) throw new Error('Nem sikerült betölteni a betűtípust.');
+      cachedFontBytes = new Uint8Array(await resp.arrayBuffer());
+      return cachedFontBytes;
+    }
+
+    const imageInput = document.getElementById('image-input');
+    const fileTextInput = document.getElementById('file-text-input');
+    const addTextBtn = document.getElementById('add-text-btn');
+    const textEditor = document.getElementById('text-editor');
+    const textInput = document.getElementById('text-input');
+    const confirmTextBtn = document.getElementById('confirm-text-btn');
+    const cancelTextBtn = document.getElementById('cancel-text-btn');
+    const queueList = document.getElementById('queue-list');
+    const emptyHint = document.getElementById('empty-hint');
+    const sizeA4Btn = document.getElementById('size-a4');
+    const sizeA3Btn = document.getElementById('size-a3');
+    const generateBtn = document.getElementById('generate-btn');
+    const status = document.getElementById('status');
+
+    let items = [];
+    let nextId = 1;
+    let pageSizeName = 'A4';
+
+    function updateEmptyHint() {
+      emptyHint.style.display = items.length === 0 ? 'block' : 'none';
+      generateBtn.disabled = items.length === 0;
+    }
+
+    function renderQueue() {
+      queueList.innerHTML = '';
+      items.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'queue-row';
+
+        const thumb = document.createElement('div');
+        thumb.className = 'queue-thumb';
+        if (item.type === 'image') {
+          const img = document.createElement('img');
+          img.src = item.previewUrl;
+          thumb.appendChild(img);
+        } else {
+          thumb.textContent = '📝';
+        }
+        row.appendChild(thumb);
+
+        const info = document.createElement('div');
+        info.className = 'queue-info';
+        const typeLabel = document.createElement('div');
+        typeLabel.className = 'queue-type';
+        typeLabel.textContent = item.type === 'image' ? 'Kép' : 'Szöveg';
+        const snippet = document.createElement('div');
+        snippet.className = 'queue-snippet';
+        snippet.textContent = item.type === 'image' ? item.name : item.content.replace(/\s+/g, ' ').slice(0, 80);
+        info.appendChild(typeLabel);
+        info.appendChild(snippet);
+        row.appendChild(info);
+
+        const actions = document.createElement('div');
+        actions.className = 'queue-actions';
+
+        const upBtn = document.createElement('button');
+        upBtn.className = 'icon-btn';
+        upBtn.type = 'button';
+        upBtn.textContent = '↑';
+        upBtn.disabled = index === 0;
+        upBtn.addEventListener('click', () => {
+          [items[index - 1], items[index]] = [items[index], items[index - 1]];
+          renderQueue();
+        });
+
+        const downBtn = document.createElement('button');
+        downBtn.className = 'icon-btn';
+        downBtn.type = 'button';
+        downBtn.textContent = '↓';
+        downBtn.disabled = index === items.length - 1;
+        downBtn.addEventListener('click', () => {
+          [items[index + 1], items[index]] = [items[index], items[index + 1]];
+          renderQueue();
+        });
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'icon-btn remove';
+        removeBtn.type = 'button';
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', () => {
+          items = items.filter((it) => it.id !== item.id);
+          renderQueue();
+        });
+
+        actions.appendChild(upBtn);
+        actions.appendChild(downBtn);
+        actions.appendChild(removeBtn);
+        row.appendChild(actions);
+
+        queueList.appendChild(row);
+      });
+      updateEmptyHint();
+    }
+
+    imageInput.addEventListener('change', () => {
+      for (const file of imageInput.files) {
+        items.push({ id: nextId++, type: 'image', file, name: file.name, previewUrl: URL.createObjectURL(file) });
+      }
+      imageInput.value = '';
+      renderQueue();
+    });
+
+    addTextBtn.addEventListener('click', () => {
+      textInput.value = '';
+      textEditor.style.display = 'block';
+      textInput.focus();
+    });
+    cancelTextBtn.addEventListener('click', () => {
+      textEditor.style.display = 'none';
+    });
+    confirmTextBtn.addEventListener('click', () => {
+      const content = textInput.value.trim();
+      if (!content) return;
+      items.push({ id: nextId++, type: 'text', content });
+      textEditor.style.display = 'none';
+      renderQueue();
+    });
+
+    fileTextInput.addEventListener('change', () => {
+      const file = fileTextInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const content = String(reader.result).trim();
+        if (content) {
+          items.push({ id: nextId++, type: 'text', content });
+          renderQueue();
+        }
+      };
+      reader.readAsText(file);
+      fileTextInput.value = '';
+    });
+
+    sizeA4Btn.addEventListener('click', () => {
+      pageSizeName = 'A4';
+      sizeA4Btn.classList.add('active');
+      sizeA3Btn.classList.remove('active');
+    });
+    sizeA3Btn.addEventListener('click', () => {
+      pageSizeName = 'A3';
+      sizeA3Btn.classList.add('active');
+      sizeA4Btn.classList.remove('active');
+    });
+
+    // --- Egyszerű Markdown-feldolgozás: címsor (# ## ###), listaelem (- / *), **félkövér** ---
+    function parseMarkdownBlocks(text) {
+      const lines = text.split(/\r?\n/);
+      const blocks = [];
+      let paragraphBuffer = [];
+      function flushParagraph() {
+        if (paragraphBuffer.length) {
+          blocks.push({ type: 'paragraph', text: paragraphBuffer.join(' ') });
+          paragraphBuffer = [];
+        }
+      }
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (line === '') { flushParagraph(); continue; }
+        const heading = line.match(/^(#{1,3})\s+(.*)$/);
+        if (heading) {
+          flushParagraph();
+          blocks.push({ type: 'heading', level: heading[1].length, text: heading[2] });
+          continue;
+        }
+        const listItem = line.match(/^[-*]\s+(.*)$/);
+        if (listItem) {
+          flushParagraph();
+          blocks.push({ type: 'listitem', text: listItem[1] });
+          continue;
+        }
+        paragraphBuffer.push(line);
+      }
+      flushParagraph();
+      return blocks;
+    }
+
+    function splitBoldRuns(text) {
+      const runs = [];
+      const regex = /\*\*(.+?)\*\*/g;
+      let lastIndex = 0;
+      let match;
+      while ((match = regex.exec(text))) {
+        if (match.index > lastIndex) runs.push({ text: text.slice(lastIndex, match.index), bold: false });
+        runs.push({ text: match[1], bold: true });
+        lastIndex = regex.lastIndex;
+      }
+      if (lastIndex < text.length) runs.push({ text: text.slice(lastIndex), bold: false });
+      return runs;
+    }
+
+    function tokenize(runs) {
+      const tokens = [];
+      for (const run of runs) {
+        const words = run.text.split(/\s+/).filter(Boolean);
+        for (const w of words) tokens.push({ text: w, bold: run.bold });
+      }
+      return tokens;
+    }
+
+    function wrapTokens(tokens, fontRegular, fontBold, size, maxWidth) {
+      const spaceWidth = fontRegular.widthOfTextAtSize(' ', size);
+      const lines = [];
+      let current = [];
+      let currentWidth = 0;
+      for (const token of tokens) {
+        const font = token.bold ? fontBold : fontRegular;
+        const wordWidth = font.widthOfTextAtSize(token.text, size);
+        const added = current.length ? spaceWidth + wordWidth : wordWidth;
+        if (currentWidth + added > maxWidth && current.length) {
+          lines.push(current);
+          current = [token];
+          currentWidth = wordWidth;
+        } else {
+          current.push(token);
+          currentWidth += added;
+        }
+      }
+      if (current.length) lines.push(current);
+      return lines;
+    }
+
+    function drawTokenLine(page, tokens, x, y, fontRegular, fontBold, size) {
+      let cursorX = x;
+      const spaceWidth = fontRegular.widthOfTextAtSize(' ', size);
+      tokens.forEach((token, i) => {
+        const font = token.bold ? fontBold : fontRegular;
+        page.drawText(token.text, { x: cursorX, y, size, font, color: rgb(0.17, 0.18, 0.17) });
+        cursorX += font.widthOfTextAtSize(token.text, size);
+        if (i < tokens.length - 1) cursorX += spaceWidth;
+      });
+    }
+
+    function fileToPngBytes(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob((blob) => {
+            URL.revokeObjectURL(url);
+            if (!blob) { reject(new Error('A kép konvertálása nem sikerült.')); return; }
+            blob.arrayBuffer().then((buf) => resolve(new Uint8Array(buf)));
+          }, 'image/png');
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Nem sikerült beolvasni a képet.')); };
+        img.src = url;
+      });
+    }
+
+    async function buildPdf() {
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.registerFontkit(fontkit);
+      const unicodeFontBytes = await getUnicodeFontBytes();
+      const fontRegular = await pdfDoc.embedFont(unicodeFontBytes, { subset: true });
+      const fontBold = fontRegular; // nincs külön félkövér statikus fájl elérhető, ld. fenti megjegyzés
+      const pageSize = pageSizeName === 'A3' ? PageSizes.A3 : PageSizes.A4;
+      const margin = 56;
+
+      let page = null;
+      let cursorY = 0;
+
+      function newPage() {
+        page = pdfDoc.addPage(pageSize);
+        cursorY = page.getHeight() - margin;
+      }
+      function ensureSpace(lineHeight) {
+        if (!page || cursorY - lineHeight < margin) newPage();
+      }
+
+      for (const item of items) {
+        if (item.type === 'image') {
+          newPage();
+          const pngBytes = await fileToPngBytes(item.file);
+          const embedded = await pdfDoc.embedPng(pngBytes);
+          const maxW = page.getWidth() - margin * 2;
+          const maxH = page.getHeight() - margin * 2;
+          const scale = Math.min(maxW / embedded.width, maxH / embedded.height);
+          const drawW = embedded.width * scale;
+          const drawH = embedded.height * scale;
+          page.drawImage(embedded, {
+            x: (page.getWidth() - drawW) / 2,
+            y: (page.getHeight() - drawH) / 2,
+            width: drawW,
+            height: drawH,
+          });
+          page = null; // a következő elem (kép vagy szöveg) mindig friss oldalon kezdődjön
+        } else {
+          const blocks = parseMarkdownBlocks(item.content);
+          if (!page) newPage();
+          for (const block of blocks) {
+            let size, font, indent = 0, prefix = '';
+            if (block.type === 'heading') {
+              size = block.level === 1 ? 20 : block.level === 2 ? 16 : 13;
+              font = fontBold;
+            } else if (block.type === 'listitem') {
+              size = 11;
+              font = fontRegular;
+              indent = 16;
+              prefix = '•';
+            } else {
+              size = 11;
+              font = fontRegular;
+            }
+            const lineHeight = size * 1.45;
+            const maxWidth = page.getWidth() - margin * 2 - indent;
+            const runs = splitBoldRuns(block.text);
+            const tokens = block.type === 'heading' ? tokenize(runs).map((t) => ({ ...t, bold: true })) : tokenize(runs);
+            const lines = wrapTokens(tokens, fontRegular, fontBold, size, maxWidth);
+
+            for (const [i, lineTokens] of lines.entries()) {
+              ensureSpace(lineHeight);
+              const x = margin + indent;
+              if (prefix && i === 0) {
+                page.drawText(prefix, { x: margin, y: cursorY, size, font: fontRegular, color: rgb(0.17, 0.18, 0.17) });
+              }
+              drawTokenLine(page, lineTokens, x, cursorY, fontRegular, fontBold, size);
+              cursorY -= lineHeight;
+            }
+            cursorY -= size * 0.5; // extra tér blokkok között
+          }
+        }
+      }
+
+      if (pdfDoc.getPageCount() === 0) newPage();
+      return pdfDoc.save();
+    }
+
+    generateBtn.addEventListener('click', async () => {
+      if (items.length === 0) return;
+      generateBtn.disabled = true;
+      status.textContent = 'PDF összeállítása…';
+      status.className = 'status';
+      try {
+        const bytes = await buildPdf();
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'nyomtathato-dokumentum.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        status.textContent = 'Kész — letöltve.';
+        status.className = 'status ok';
+      } catch (err) {
+        status.textContent = 'Hiba a PDF összeállításakor: ' + err.message;
+        status.className = 'status err';
+      } finally {
+        updateEmptyHint();
+      }
+    });
+
+    updateEmptyHint();
+  </script>
+</body>
+</html>

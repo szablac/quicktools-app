@@ -6,19 +6,22 @@
 
 | Mező | Érték |
 |---|---|
-| Fázis | 1 – Platform-váz + TOOL-001..006 KÉSZ; PROD-002, OPS-001, UX-001, UX-002, I18N-001, SEO-001, OPS-002 KÉSZ; MON-001 hirdetéskód+consent élesben igazolva, Google-jóváhagyásra vár |
-| Aktív feladat | – (nincs kijelölt aktív tétel; a Google-oldali AdSense-jóváhagyás automatikusan fut a háttérben, nem rajtunk múlik) |
-| Állapot | `adsbygoogle.js` élesben fut mind a 18 HU/EN oldalon, GDPR consent-üzenet HU+EN nyelven közzétéve és élesben látszik. A deploy első alkalommal az új `scripts/deploy.sh`-val történt SSH-n keresztül (kilépési kód 0). |
-| Kiemelt következő feladat | Döntés kell: következő tool (pl. Markdown → PDF), vagy más nyitott tétel |
-| Aktuális kódmódosítás | – (minden pusholva és deployolva: `a5cb5f6`) |
-| Blokkoló | – (a felhasználó megkérte az AdSense újra-felülvizsgálatát a hirdetéskód-hiány javítása után; napok kérdése lehet, nem rajtunk múlik) |
-| Utolsó tartós döntés | ADR-017 (2026-08-23, `ELFOGADOTT`) — AdSense hirdetéskód + Google Funding Choices GDPR consent-üzenet |
+| Fázis | 1 – Platform-váz + TOOL-001..006 KÉSZ; PROD-002, OPS-001, UX-001, UX-002, I18N-001, SEO-001, OPS-002 KÉSZ; MON-001 Google-jóváhagyásra vár; TOOL-007 (Nyomtatható PDF Készítő) kódja kész és alaposan tesztelve, deploy hátravan |
+| Aktív feladat | TOOL-007 — commit/push/deploy jóváhagyásra vár |
+| Állapot | Kliens-oldali PDF-készítő (képek + Markdown-szöveg → A4/A3 PDF) elkészült. Böngészős tesztelés közben két valódi hibát találtunk és javítottunk: (1) szabványos PDF-betűtípus nem bírja a magyar ő/ű betűket — beágyazott Noto Sans a megoldás (ADR-018); (2) kép utáni szöveg ráíródott a kép oldalára — javítva. |
+| Kiemelt következő feladat | Commit + push jóváhagyása, migráció (010) lefuttatása phpMyAdminban, deploy (`scripts/deploy.sh` vagy cPanel), élő ellenőrzés |
+| Aktuális kódmódosítás | `public/pdf-maker.html`, `public/en/pdf-maker.html` (új), `db/migrations/010_seed_pdf_maker.sql` (új), `docs/09_DECISIONS.md` (ADR-018), `docs/10_BACKLOG.md` — helyben, még nincs commitolva |
+| Blokkoló | – |
+| Utolsó tartós döntés | ADR-018 (2026-08-26, `ELFOGADOTT`) — beágyazott Unicode betűtípus (Noto Sans + `@pdf-lib/fontkit`) a magyar ékezetek miatt, nem szabványos PDF-font |
 
 ## Következő pontos lépések
 
-1. Döntés kell a felhasználótól: következő tool, vagy más nyitott tétel.
-2. A Google AdSense felülvizsgálat mostantól a hirdetéskóddal együtt fut — ha Google újra visszajelez (pl. "Kész" állapotra vált), érdemes lesz ránézni, de aktív teendő most nincs vele.
-3. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — referenciaként megmarad.
+1. Commit + push jóváhagyása.
+2. Migráció (`db/migrations/010_seed_pdf_maker.sql`) lefuttatása phpMyAdminban élesben.
+3. Deploy: `ssh szablac@185.75.192.93 'bash ~/quicktools.qwer.hu/scripts/deploy.sh'` vagy cPanel Pull+Restart (nincs `package.json`-változás, NPM Install nem kell).
+4. Élő ellenőrzés: `/api/tools` listázza-e a `pdf-maker`-t, HU+EN oldal 200-at ad-e, és érdemes egy valódi böngészőben (nem csak a szandbox-olt tesztelőben) is kipróbálni magyar ékezetes szöveggel.
+5. Ezután TOOL-007 lezárható `DONE`-ra; utána újra döntés kell: következő tool, vagy más nyitott tétel.
+6. Design-canvas: [https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5](https://claude.ai/code/artifact/1841a9b0-a360-427e-9c55-d2c41fe69ba5) — referenciaként megmarad.
 
 > Megjegyzés: az `ads.txt` fájl a `qwer.hu` gyökerében (`/home/szablac/public_html/ads.txt`) lett manuálisan elhelyezve — ez **nem** része a `quicktools-app` git repónak.
 
@@ -28,17 +31,17 @@
 
 ## Legutóbbi interakciók
 
-- **MON-001 — AdSense hirdetéskód + GDPR consent-üzenet**: a felhasználó megadta a publisher ID-t, majd lépésről lépésre (screenshotok alapján) végigmentünk a Google Funding Choices consent-üzenet beállításán (webhely-kiválasztás, kötelező logó — gyorsan generálva `jimp`-pel —, elutasítás-gomb, "bezárás=nincs beleegyezés", magyar nyelv hozzáadása), mielőtt a hirdetéskódot élesítettük volna. A felhasználó megerősítette: „Közzétéve", HU+EN nyelvi lefedettséggel.
-- **Kód beépítve + dokumentálva**: `adsbygoogle.js` mind a 18 HU/EN oldalra, `sutik.html`/`en/cookies.html` szövege jelen időre frissítve. ADR-017 rögzítve. Commit `a5cb5f6`, push.
-- **Élő deploy + igazolás**: első alkalommal az új `scripts/deploy.sh`-t használtuk SSH-n keresztül (kilépési kód 0, git pull sikeresen lehúzta mind a 21 fájlt). `curl`-lal igazolva: a főoldal és egy tool-oldal is tartalmazza a hirdetéskódot, a `sutik.html` frissült szövege él.
-- **AdSense újra-felülvizsgálat kérve**: a felhasználó megmutatta a "qwer.hu — A webhelyen még nem jeleníthetők meg hirdetések" jelzést (a hirdetéskód-hiány miatti korábbi irányelvsértés), majd a hirdetéskód élesítése után bepipálta a "Megerősítem, hogy javítottam a hibákat" jelölőnégyzetet és megkérte a felülvizsgálatot. Ez már Google-oldali, nem rajtunk múlik, napok kérdése lehet.
+- **MON-001 lezárva**: AdSense hirdetéskód + GDPR consent-üzenet élesben igazolva, a felhasználó megkérte az újra-felülvizsgálatot (Google-oldali, nem rajtunk múlik).
+- **TOOL-007 kérés + tisztázás**: a felhasználó egy "bármiből PDF-et csináló" toolt kért, A4 alap + A3 opcióval. Tisztáztam, hogy "bármi" (pl. `.xls`) nem reális kliens-oldalon; a felhasználó elfogadta a kép+szöveg (Markdown) kombinációt, táblázat-támogatás nélkül.
+- **Implementáció + alapos böngészős tesztelés**: a `pdf-lib`-et már ismert mintára építve (mint a PDF Oldal Kiválasztónál) saját Markdown-feldolgozót (címsor/lista/félkövér), szó-tördelést és Canvas-alapú képkonverziót írtam. A tesztelés során két valódi hibát találtam: a szabványos Helvetica betűtípus elszállt magyar ő/ű karaktereken (megoldás: beágyazott Noto Sans a `@pdf-lib/fontkit` UMD buildjével, mivel az ESM build bundler-függő "pako" importot tartalmazott), és egy oldaltördelési hibát (kép utáni szöveg ráíródott a kép oldalára). Mindkettőt javítottam, majd újratesztelve: magyar ékezetek, A4/A3 pontos méret, kép+szöveg helyes oldalszám, hosszú szöveg többoldalas tördelése, sorrendezés, eltávolítás, üres állapot — mind hibátlan.
 
 ## Aktuális munkafájlok
 
-– (minden pusholva, deployolva és élesben igazolva)
+- `public/pdf-maker.html`, `public/en/pdf-maker.html` – új tool, még nincs commitolva
+- `db/migrations/010_seed_pdf_maker.sql` – új migráció, még nincs lefuttatva
 
 ## Ellenőrzési állapot
 
-- `https://quicktools.qwer.hu/` és egy minta tool-oldal (`css-gradient-builder.html`) is tartalmazza a `client=ca-pub-2290062414680227` hirdetéskódot — curl-lal igazolva.
-- `https://quicktools.qwer.hu/sutik.html` a frissített, jelen idejű AdSense-szöveget mutatja.
-- A GDPR consent-üzenet HU+EN nyelven "Közzétéve" állapotban van (a felhasználó saját AdSense-fiókjában megerősítve).
+- `node --check` (beágyazott `<script type="module">` kinyerve): mindkét fájl szintaktikailag hibátlan.
+- Böngészőben (`javascript_exec`, blob-elfogással) igazolva: magyar ékezetes szöveg hiba nélkül, A4/A3 pontos méret, kép+szöveg helyes oldalszám (2 elem → 2 oldal), hosszú szöveg helyes többoldalas tördelése (5 oldal), sorrendezés, eltávolítás, üres állapot.
+- **Még nincs ellenőrizve**: élő (quicktools.qwer.hu) viselkedés — migráció + deploy szükséges hozzá.

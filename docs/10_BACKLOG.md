@@ -40,6 +40,7 @@
 | 14 | I18N-001 | P2 | `DONE` | Nyelvi útvonalválasztás IP-alapú országfelismeréssel (`geoip-lite`, ADR-014): magyar IP → magyar kezdőoldal, külföldi → `/en/`, `qt_lang` süti emlékszik a választásra. Csak a gyökér (`/`) útvonalra vonatkozik. Adatvédelmi/cookie szabályzat frissítve. Élesben `curl`-lal igazolva mind a 3 fő eset (külföldi/magyar/már döntött) | – |
 | 15 | SEO-001 | P2 | `DONE` | SEO-alapok pótolva (ADR-015): `robots.txt`, dinamikusan generált `sitemap.xml` (a `tools` táblából), `rel="canonical"` + `hreflang` (hu/en/x-default) mind a 9 HU/EN oldalpáron (18 fájl). Schema.org strukturált adat tudatosan kimaradt (nice-to-have). Élesben igazolva. | – |
 | 16 | OPS-002 | P2 | `DONE` | SSH-alapú deploy-eszközök (ADR-016): `scripts/deploy.sh` (git pull + feltételes npm install + Passenger-restart, biztonsági fékkel) és `~/.my.cnf` a szerveren (migrációk `mysql` CLI-vel, jelszó-begépelés nélkül). Fokozatos átállás — a jelenlegi cPanel/phpMyAdmin munkamód egyelőre változatlan marad, ez csak gyorsabb alternatíva. Élesben ténylegesen lefuttatva (kilépési kód 0), utána a főoldal + `/api/tools` is helyesen válaszolt. | ADR-006 (shell-hozzáférés engedélyezve) |
+| 18 | TOOL-007 | P2 | `VERIFY` | Nyomtatható PDF Készítő megvalósítva (teljesen kliens-oldali, `pdf-lib` + `@pdf-lib/fontkit`, beágyazott Noto Sans a magyar ékezetek miatt, ADR-018): képek és Markdown-szöveg tetszőleges sorrendben, A4/A3 méret. Két valódi hibát találtunk és javítottunk böngészős teszteléssel (magyar ő/ű karakterek elszállása, kép utáni oldaltördelési hiba). Alaposan tesztelve böngészőben; élesítés hátravan. | PLAT-001 (kész) |
 
 ## Kiemelt feladatok elfogadási feltételei
 
@@ -120,3 +121,14 @@
 - [x] `GET /sitemap.xml` dinamikusan generál 18 URL-bejegyzést (9 oldalpár × 2 nyelv), helyes hreflang-párosítással — Node.js-ben önállóan igazolva
 - [x] Mind a 18 HTML-fájl tartalmazza a `rel="canonical"` és a 3 `hreflang` (hu/en/x-default) címkét — `grep`-pel igazolva
 - [x] Élesben ellenőrizve: `/robots.txt`, `/sitemap.xml` 200-at ad, a sitemap tartalma helyes (18 URL, korrekt hreflang-párosítás)
+
+### TOOL-007
+
+- [x] Magyar ékezetes (ő/ű) szöveg hiba nélkül kerül a PDF-be (beágyazott Unicode betűtípussal, böngészőben igazolva)
+- [x] A4 (595×842pt) és A3 (842×1191pt) pontos méret, választhatóan
+- [x] Kép + szöveg vegyesen, tetszőleges sorrendben — 2 elem pontosan 2 oldalt ad (nincs ráíródás, nincs felesleges üres záró oldal)
+- [x] Hosszú szöveg helyes, automatikus többoldalas tördelése (80 bekezdés → 5 oldal, böngészőben igazolva)
+- [x] Sorrendezés (fel/le), eltávolítás, üres állapot (generálás gomb letiltva) mind helyesen működik
+- [ ] `db/migrations/010_seed_pdf_maker.sql` lefuttatva phpMyAdmin-ban
+- [ ] `GET /api/tools` élesben tartalmazza a `pdf-maker` slugot
+- [ ] `pdf-maker.html` és `en/pdf-maker.html` élesben 200-at ad
